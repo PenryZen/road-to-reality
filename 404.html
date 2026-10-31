@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>这个地址没有内容 · 通向实在之路</title>
+<style>
+  :root{--bg:#0b0918;--surf:#151129;--line:#2e2650;--txt:#ece9ff;--dim:#a79fd6;--hint:#8d86b5;--cyan:#3ee8f0}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    -webkit-font-smoothing:antialiased}
+  .box{max-width:520px;width:100%;background:var(--surf);border:1px solid var(--line);
+    border-radius:16px;padding:32px 28px}
+  .tag{display:inline-block;font-size:12px;letter-spacing:.08em;color:var(--cyan);
+    border:1px solid rgba(62,232,240,.35);border-radius:999px;padding:3px 10px;margin-bottom:16px}
+  h1{margin:0 0 12px;font-size:22px;line-height:1.4}
+  p{margin:0 0 10px;font-size:14px;line-height:1.85;color:var(--dim)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+    background:rgba(62,232,240,.08);border:1px solid rgba(62,232,240,.2);
+    border-radius:5px;padding:1px 5px;color:#a8e9ee}
+  .btn{display:inline-block;margin-top:20px;padding:10px 20px;border-radius:9px;
+    background:rgba(62,232,240,.12);border:1px solid rgba(62,232,240,.38);
+    color:var(--cyan);font-size:14px;font-weight:600;text-decoration:none}
+  .btn:hover{background:rgba(62,232,240,.2)}
+  .auto{margin-top:14px;font-size:12px;color:var(--hint)}
+</style>
+</head>
+<body>
+  <div class="box">
+    <span class="tag">404</span>
+    <h1>这个地址没有内容</h1>
+    <p>可能是链接少了一段，或者这本书的某个章节已经被重新编号。</p>
+    <p>首页在 <code>/road-to-reality/</code>，从那里进地图就行。</p>
+    <a class="btn" href="/road-to-reality/">回到学习站首页</a>
+    <div class="auto">3 秒后自动跳转…</div>
+  </div>
+  <script>
+    setTimeout(function () {
+      if (location.pathname !== "/road-to-reality/") location.replace("/road-to-reality/");
+    }, 3000);
+  </script>
+</body>
+</html>
