@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>通向实在之路 · 通关学习站</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ 顶部 HUD ============ -->
+  <header class="hud">
+    <div class="hud-left">
+      <div class="logo">通向实在之路</div>
+      <div class="sub">The Road to Reality · Penrose 宇宙法则通关站</div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat"><span class="v" id="hud-xp">0</span><span class="k">XP</span></div>
+      <div class="stat"><span class="v" id="hud-lv">1</span><span class="k">等级</span></div>
+      <div class="stat"><span class="v" id="hud-streak">0</span><span class="k">连胜天</span></div>
+      <div class="stat"><span class="v" id="hud-due">0</span><span class="k">到期卡</span></div>
+      <div class="stat"><span class="v" id="hud-frag">0</span><span class="k">碎片</span></div>
+    </div>
+    <nav class="hud-nav">
+      <button class="tab active" data-view="map">地图</button>
+      <button class="tab" data-view="recall">今日复习</button>
+      <button class="tab" data-view="wall">复盘墙</button>
+      <button class="tab" data-view="library">方法图鉴</button>
+      <button class="tab" data-view="companion">AI 学伴</button>
+    </nav>
+  </header>
+
+  <!-- ============ 主区 ============ -->
+  <main id="main">
+
+    <!-- ---------- 地图视图 ---------- -->
+    <section class="view" id="view-map">
+      <div class="view-head">
+        <h1>全局任务地图</h1>
+        <p>六个区域对应《通向实在之路》的六段弧线：数学真理 → 复数 → 几何语言 → 时空与场 → 量子世界 → 量子引力。<b>34 章逐章精读</b>，每章读完立刻考；再进闪卡调度与综合关。通关条件是延迟提取，不是看过。</p>
+      </div>
+      <div class="map" id="map-grid"></div>
+
+      <div class="panel">
+        <h2 class="panel-t">本作核心规则</h2>
+        <ul class="rules">
+          <li><b>先预测再作答</b>：每题先选把握度，系统记录你的元认知校准误差。</li>
+          <li><b>闭卷优先</b>：回忆关不给提示，看提示要扣分——这是主动回忆的代价机制。</li>
+          <li><b>间隔调度</b>：闪卡按 SM-2 排期，答对拉长间隔，答错回炉重学。</li>
+          <li><b>XP 只奖励提取</b>：读精读稿不给分，答对出门检查才给分。</li>
+          <li><b>先编码后提取</b>：精读关排在闪卡关之前；精读不通关，该章的卡片不会标记为已学，闪卡关不解锁。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ---------- 今日复习（SM-2 队列） ---------- -->
+    <section class="view hidden" id="view-recall">
+      <div class="view-head">
+        <h1>今日复习队列</h1>
+        <p>SM-2 调度：到期卡优先，新卡每日上限 20 张。评分决定下次出现的时间，答错立刻回炉。队列只从<b>已通关</b>的章节出卡——没读过的内容不会来考你。</p>
+      </div>
+      <div class="recall-wrap">
+        <div class="card-box" id="recall-box">
+          <div class="card-face" id="recall-front"></div>
+          <div class="card-face hidden" id="recall-back"></div>
+          <div class="card-meta" id="recall-meta"></div>
+        </div>
+        <div class="grade-row hidden" id="recall-grades">
+          <button class="g g1" data-g="1">忘记</button>
+          <button class="g g3" data-g="3">困难</button>
+          <button class="g g4" data-g="4">良好</button>
+          <button class="g g5" data-g="5">轻松</button>
+        </div>
+        <div class="row-btns">
+          <button class="btn primary" id="recall-show">显示答案</button>
+          <button class="btn ghost" id="recall-skip">跳过本张</button>
+        </div>
+        <div class="queue-info" id="queue-info"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 复盘墙 ---------- -->
+    <section class="view hidden" id="view-wall">
+      <div class="view-head">
+        <h1>复盘成就墙</h1>
+        <p>这里不显示你"学了多久"，只显示你能取出来多少。</p>
+      </div>
+      <div class="wall-grid">
+        <div class="panel">
+          <h2 class="panel-t">六区域掌握度</h2>
+          <div id="mastery-rings" class="rings"></div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-t">错因分布</h2>
+          <div id="mistake-bars" class="bars"></div>
+          <p class="hint">知识性错误占比下降才算真进步；表达类错误下降可能只是熟练度。</p>
+        </div>
+        <div class="panel">
+          <h2 class="panel-t">元认知校准</h2>
+          <div id="calib" class="calib"></div>
+          <p class="hint">校准误差 = |预测正确率 − 实际正确率|。误差越小，你越清楚自己哪里不会。</p>
+        </div>
+        <div class="panel">
+          <h2 class="panel-t">连胜日历 · 近 14 天</h2>
+          <div id="streak-cal" class="cal"></div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-t">成就</h2>
+          <div id="achv" class="achv"></div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-t">数据导出</h2>
+          <p class="hint">所有进度可导出，避免平台锁定与黑箱算法。</p>
+          <div class="row-btns">
+            <button class="btn" id="exp-csv">导出 Anki 卡包 (CSV)</button>
+            <button class="btn" id="exp-json">导出学习日志 (JSON)</button>
+            <button class="btn danger" id="exp-reset">清空进度</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 方法图鉴 ---------- -->
+    <section class="view hidden" id="view-library">
+      <div class="view-head">
+        <h1>8 种读这本书的方法</h1>
+        <p>按证据强度分层：第一梯队无条件优先，第二梯队基础扎实后叠加，辅助类只做配角，最后一类请当反面讲稿——它正是「从第一页硬啃到第 1124 页」。</p>
+        <div class="row-btns" id="lib-filter">
+          <button class="btn small" data-f="all">全部 8</button>
+          <button class="btn small" data-f="1">第一梯队</button>
+          <button class="btn small" data-f="2">第二梯队</button>
+          <button class="btn small" data-f="3">辅助</button>
+          <button class="btn small" data-f="4">误传</button>
+        </div>
+      </div>
+      <div class="lib-grid" id="lib-grid"></div>
+    </section>
+
+    <!-- ---------- AI 学伴 ---------- -->
+    <section class="view hidden" id="view-companion">
+      <div class="view-head">
+        <h1>AI 学伴</h1>
+        <p>接上你自己的模型：DeepSeek 官方、本地 Ollama / LM Studio，或任意 OpenAI 兼容网关。学伴的默认纪律是「只追问、不给答案」——它做追问者、批改者、诊断者，答案仍然由你自己产出。</p>
+      </div>
+
+      <!-- 模型设置 -->
+      <div class="panel llm-panel">
+        <div class="llm-title">
+          <h2 class="panel-t">模型设置</h2>
+          <span class="pill" id="llm-status">未配置</span>
+        </div>
+
+        <div class="llm-grid">
+          <label class="fld">
+            <span>提供商预设</span>
+            <select id="llm-preset"></select>
+          </label>
+
+          <label class="fld">
+            <span>模型名</span>
+            <span class="input-line">
+              <input id="llm-model" list="llm-modellist" placeholder="deepseek-v4-pro" autocomplete="off">
+              <button class="btn small ghost" id="llm-fetch-models" title="向 Base URL 请求 /models">拉取列表</button>
+            </span>
+            <datalist id="llm-modellist"></datalist>
+          </label>
+
+          <label class="fld wide">
+            <span>Base URL<span class="hint">填到版本段为止，别带 /chat/completions</span></span>
+            <input id="llm-base" placeholder="https://api.deepseek.com/v1" autocomplete="off" spellcheck="false">
+          </label>
+
+          <label class="fld wide">
+            <span>API Key<span class="hint">只存在本机浏览器，直发你填的地址</span></span>
+            <span class="input-line">
+              <input id="llm-key" type="password" placeholder="sk-…（本地服务可留空）" autocomplete="off" spellcheck="false">
+              <button class="btn small ghost" id="llm-key-eye">显示</button>
+            </span>
+          </label>
+
+          <label class="fld">
+            <span>温度 <b id="llm-temp-v">0.7</b></span>
+            <input id="llm-temp" type="range" min="0" max="1.5" step="0.1">
+          </label>
+
+          <label class="fld">
+            <span>最大输出 tokens<span class="hint">思考过程也算在内，调小会截断长回答</span></span>
+            <input id="llm-maxtok" type="number" min="256" max="16384" step="256">
+          </label>
+
+          <label class="fld">
+            <span>超时（秒）<span class="hint">多久没新内容才放弃</span></span>
+            <input id="llm-timeout" type="number" min="10" max="600" step="5">
+          </label>
+
+          <div class="fld checks">
+            <label><input type="checkbox" id="llm-stream"> 流式输出（打字机效果）</label>
+            <label><input type="checkbox" id="llm-reason"> 展开思考过程（reasoning）</label>
+          </div>
+        </div>
+
+        <div class="llm-preset-note" id="llm-preset-note"></div>
+
+        <div class="row-btns">
+          <button class="btn primary" id="llm-save">保存设置</button>
+          <button class="btn" id="llm-test">测试连接</button>
+          <button class="btn ghost" id="llm-reset">恢复默认</button>
+          <button class="btn ghost" id="llm-clear">清除密钥</button>
+          <button class="btn ghost" id="llm-proxy">下载本地代理脚本</button>
+        </div>
+
+        <div class="llm-result hidden" id="llm-result"></div>
+
+        <details class="llm-help">
+          <summary>连不上？三种典型情况与解法</summary>
+          <div class="llm-help-body">
+            <p><b>① 跨域被拦（最常见的报错）。</b>浏览器会打印 <code>CORS policy</code> 或本页提示「无法连接到…」。云端 API（含 DeepSeek 官方）与部分本地服务都不允许网页直接调用。解法：下载本仓库的 <code>ds-proxy.py</code>，在本机执行</p>
+            <pre>python3 ds-proxy.py --upstream https://api.deepseek.com --key sk-你的key</pre>
+            <p>然后把这里的 Base URL 改成 <code>http://127.0.0.1:8787/v1</code>，Key 留空（key 已放在代理端，不进浏览器），模型名照旧。</p>
+            <p><b>② 混合内容拦截。</b>若页面以 <code>https://</code> 打开，而接口是 <code>http://127.0.0.1</code>，浏览器会直接拒绝。用本地单文件打开（<code>file://</code>）或让两者协议一致。</p>
+            <p><b>③ 密钥或模型名不对。</b>报 401 是 key 问题，报 404 / 400 多为 Base URL 少了 <code>/v1</code>，或模型名不存在——点「拉取列表」看看服务端到底有哪些模型。</p>
+            <p class="dim">DeepSeek 官方模型名：<code>deepseek-v4-pro</code>（思考模式）、<code>deepseek-v4-flash</code>（非思考）。旧的 <code>deepseek-chat</code> / <code>deepseek-reasoner</code> 已于 2026-07-24 弃用。</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- 提示词库 -->
+      <div class="panel">
+        <h2 class="panel-t">提示词库</h2>
+        <p class="dim">下面这些提示词可以直接复制到任意对话窗口使用，也是浮动学伴面板内置的人设来源。</p>
+      </div>
+      <div class="prompt-grid" id="prompt-grid"></div>
+
+      <div class="panel">
+        <h2 class="panel-t">三条不可让渡的红线</h2>
+        <ul class="rules">
+          <li><b>先生成，后辅助</b>：任何任务先独立做，AI 只做批改与追问。</li>
+          <li><b>答案不算产出</b>：合上 AI 的回复，凭记忆重写一次，才算完成。</li>
+          <li><b>事实必核查</b>：AI 给的数字与引用一律回到本站讲稿二次核对——它会一本正经地编页码。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ---------- 关卡视图 ---------- -->
+    <section class="view hidden" id="view-level">
+      <button class="btn ghost back" id="level-back">← 返回地图</button>
+      <button class="btn ghost back" id="readmode-toggle" title="切换精读排版：大字号、宽行距、易辨识，适合长时间阅读">阅读模式：关</button>
+      <div class="level-head">
+        <div class="lv-tag" id="lv-tag"></div>
+        <h1 id="lv-title"></h1>
+        <p id="lv-brief"></p>
+        <div class="lv-method" id="lv-method"></div>
+      </div>
+      <!-- 阅读滑轨：既是进度，也是页码导航（悬停看页码+小节，点击/方向键跳页） -->
+      <div class="rd-scrub" id="rd-scrub" role="slider" tabindex="0"
+           aria-label="阅读进度，可跳页" aria-orientation="horizontal"
+           aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">
+        <div class="rd-scrub-rail">
+          <span class="rd-scrub-seg" id="rd-seg"></span>
+          <div class="progress-bar" id="lv-progress"></div>
+          <span class="rd-scrub-ticks" id="rd-ticks"></span>
+          <i class="rd-scrub-cursor" id="rd-cursor"></i>
+        </div>
+        <div class="rd-tip" id="rd-tip"></div>
+      </div>
+      <div class="stage" id="lv-stage"></div>
+      <div class="row-btns" id="lv-actions"></div>
+      <div class="feedback hidden" id="lv-feedback"></div>
+    </section>
+
+  </main>
+
+  <!-- ============ AI 学伴浮动面板 ============ -->
+  <aside id="npc" class="npc">
+    <div class="npc-head" id="npc-toggle">
+      <span class="dot" id="npc-dot"></span>
+      <span>AI 学伴</span>
+      <span class="npc-badge" id="npc-badge">未配置</span>
+      <button class="npc-exp" id="npc-expand" type="button"
+              title="展开为分屏：学伴铺在右侧，和网页并排看">⤢</button>
+      <span class="caret">▾</span>
+    </div>
+    <div class="npc-body" id="npc-body">
+      <div class="npc-modes" id="npc-modes">
+        <button class="btn small" data-mode="ask">只追问</button>
+        <button class="btn small" data-mode="review">批改</button>
+        <button class="btn small" data-mode="chat">自由问答</button>
+      </div>
+      <div class="npc-ctx" id="npc-ctx"></div>
+      <div class="chat" id="npc-chat"></div>
+      <textarea id="npc-input" class="npc-input" rows="2" placeholder="先写下你自己的答案，再让学伴追问…（Ctrl/⌘ + Enter 发送）"></textarea>
+      <div class="row-btns">
+        <button class="btn small primary" id="npc-ask">发送</button>
+        <button class="btn small ghost" id="npc-stop">停止</button>
+        <button class="btn small ghost" id="npc-clear">清空</button>
+        <button class="btn small ghost" id="npc-export">导出</button>
+        <button class="btn small ghost" id="npc-config">设置</button>
+      </div>
+      <div class="npc-tip" id="npc-tip">未接模型时，学伴用内置规则追问；在「设置」里填好 API 即可接入你自己的模型。</div>
+    </div>
+  </aside>
+
+  <footer class="foot">
+    学习进度与模型配置都保存在本机浏览器（localStorage），不上传。API Key 只会在你发起对话时直接发往你自己填写的地址。进度可随时导出。
+  </footer>
+</div>
+
+<!-- 首屏只带地图需要的：数据结构、引擎、学伴、朗读模块 -->
+<script src="data.js"></script>
+<script src="data-cards.js"></script>
+<script src="data-pools.js"></script>
+<script src="engine.js"></script>
+<script src="llm.js"></script>
+<script src="tts.js"></script>
+<script src="math.js"></script>
+<!-- 按需加载清单（由 gen/build-lazy.py 生成） -->
+<script src="gen/lazy/manifest.js"></script>
+<script src="lazy.js"></script>
+<!-- @@LAZY@@ 单文件版在这里内联 KaTeX / 章节 / 插图 / 图示 -->
+<script src="emph.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
