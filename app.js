@@ -768,7 +768,7 @@ var App = (function () {
     var h = '<details class="plainwrap" id="plain-' + cur.idx + '">' +
       '<summary class="plain-sum" id="plain-sum-' + cur.idx + '">' +
       '<span class="plain-badge">人话</span>' +
-      '<span class="plain-sum-t">' + esc(pl.t || "这一页在讲什么") + "</span>" +
+      '<span class="plain-sum-t">' + md(pl.t || "这一页在讲什么") + "</span>" +
       '<span class="plain-sum-x"></span></summary>' +
       '<div class="plainblk" id="plain-body-' + cur.idx + '">';
 
