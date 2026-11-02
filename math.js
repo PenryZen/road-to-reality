@@ -511,7 +511,10 @@
     if (!display) tex = inlineFrac(tex);
     var h = display ? displayHTML(tex, cls || "mblk", tail) : texToHTML(tex, false);
     if (h === null) {
-      if (stat.fail.length < 60) stat.fail.push({ raw: raw, tex: tex });
+      /* KaTeX 是懒加载的：它还没到的时候，公式先退回原文，等 MT.ready 到了
+         会重排一次。这时不算「渲染失败」，记下来会让验收脚本误报。
+         只有 KaTeX 已经在、却仍然拒绝这个式子，才是真失败。 */
+      if ((root.katex || KX) && stat.fail.length < 60) stat.fail.push({ raw: raw, tex: tex });
       return null;
     }
     if (display) return h;

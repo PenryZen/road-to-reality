@@ -689,7 +689,79 @@ var App = (function () {
      把「硬」的原文翻译成能动手实验的通俗读本。
      结构对齐那份《反演与默比乌斯变换》读本：导语 → 讲解 → 试一试 → 表格 → 口诀。
      plain 由数据层给：{t,kicker,body:[{h,p[]}],labs:[{q,fig,hint}],quote,table,tail}
+
+     「讲解到哪儿，互动就到哪儿」：body 段的 p 数组里可以混进三种行内环节，
+       lab   —— 试一试（配一张可交互图）
+       ask   —— 想一想（点一下展开答案）
+       check —— 小检验（选一个，对错当场判，并给出解释）
+     写成 {"lab":{...}} / {"ask":{...}} / {"check":{...}}；
+     顶层 labs 数组仍被支持（老写法，一律排到叙述末尾）。
+     渲染与挂图共用同一份清单 plainPlan()，编号一致，图的盒子才对得上。
+
      交互图在展开时才挂载（懒加载），否则每页都要背上所有图的代价。 */
+
+  /* 把人话内容摊成一条按顺序的清单：段落 / 试一试 / 想一想 / 小检验 */
+  function plainPlan(pl) {
+    var plan = [], si = 0;
+    (pl.body || []).forEach(function (sec) {
+      (sec.p || []).forEach(function (it) {
+        if (typeof it === "string") {
+          if (it.trim()) plan.push({ kind: "p", si: si, v: it });
+          return;
+        }
+        if (!it || typeof it !== "object") return;
+        if (it.lab) plan.push({ kind: "lab", si: si, v: it.lab });
+        else if (it.ask) plan.push({ kind: "ask", si: si, v: it.ask });
+        else if (it.check) plan.push({ kind: "check", si: si, v: it.check });
+      });
+      si++;
+    });
+    /* 老写法：labs 挂在末尾 */
+    (pl.labs || []).forEach(function (lab) { plan.push({ kind: "lab", si: -1, v: lab }); });
+    plan.forEach(function (it, i) { it.n = i; });
+    return plan;
+  }
+
+  /* 一个行内环节的 HTML */
+  function plainItemHtml(it, idx) {
+    if (it.kind === "p") {
+      /* 整段就是一条公式的，单独成行并居中（跟正文的 .math-line 一个规矩） */
+      var bare = String(it.v).trim();
+      var isFml = bare.length > 1 && bare.charAt(0) === "$" && bare.charAt(bare.length - 1) === "$"
+                  && bare.indexOf("$", 1) === bare.length - 1
+                  && typeof MT !== "undefined" && MT.isBlockMath(bare.slice(1, -1));
+      if (isFml) return '<div class="plain-p plain-fml">' + md(bare) + "</div>";
+      return '<div class="plain-p">' + md(it.v) + "</div>";
+    }
+    if (it.kind === "lab") {
+      var lab = it.v;
+      return '<div class="lab"><div class="lab-t">试一试</div>' +
+        '<div class="lab-q">' + md(lab.q) + "</div>" +
+        (lab.fig ? '<div class="figbox" id="plain-fig-' + idx + "-" + it.n + '"></div>' : "") +
+        (lab.hint ? '<div class="lab-hint">' + md(lab.hint) + "</div>" : "") +
+        "</div>";
+    }
+    if (it.kind === "ask") {
+      var a = it.v;
+      return '<details class="plain-ask" id="plain-ask-' + idx + "-" + it.n + '">' +
+        '<summary class="plain-ask-q"><span class="plain-tag">想一想</span>' +
+        '<span class="plain-ask-t">' + md(a.q || "") + "</span></summary>" +
+        '<div class="plain-ask-a">' + md(a.a || "") + "</div></details>";
+    }
+    if (it.kind === "check") {
+      var c = it.v;
+      var opts = (c.opts || []).map(function (o, i) {
+        return '<button type="button" class="pcheck-opt" data-i="' + i + '">' + md(o) + "</button>";
+      }).join("");
+      return '<div class="plain-check" id="plain-check-' + idx + "-" + it.n + '" data-right="' + (c.right || 0) + '">' +
+        '<div class="plain-check-t"><span class="plain-tag">小检验</span>' +
+        '<span class="plain-check-q">' + md(c.q || "") + "</span></div>" +
+        '<div class="plain-check-opts">' + opts + "</div>" +
+        '<div class="plain-check-why" hidden>' + md(c.why || "") + "</div></div>";
+    }
+    return "";
+  }
+
   function plainHtml(it) {
     var pl = it.plain;
     if (!pl) return "";
@@ -701,25 +773,20 @@ var App = (function () {
       '<div class="plainblk" id="plain-body-' + cur.idx + '">';
 
     if (pl.kicker) h += '<div class="plain-kicker">' + esc(pl.kicker) + "</div>";
-    (pl.body || []).forEach(function (sec) {
-      if (sec.h) h += '<div class="plain-title">' + md(sec.h) + "</div>";
-      (sec.p || []).forEach(function (t) {
-        /* 整段就是一条公式的，单独成行并居中（跟正文的 .math-line 一个规矩） */
-        var bare = String(t).trim();
-        var isFml = bare.length > 1 && bare.charAt(0) === "$" && bare.charAt(bare.length - 1) === "$"
-                    && bare.indexOf("$", 1) === bare.length - 1
-                    && typeof MT !== "undefined" && MT.isBlockMath(bare.slice(1, -1));
-        if (isFml) h += '<div class="plain-p plain-fml">' + md(bare) + "</div>";
-        else h += '<div class="plain-p">' + md(t) + "</div>";
-      });
+
+    /* 按「节 → 行内环节」渲染，环节跟着它所在的那一节走 */
+    var plan = plainPlan(pl), pi = 0;
+    (pl.body || []).forEach(function (sec, si) {
+      var head = sec.h ? '<div class="plain-title">' + md(sec.h) + "</div>" : "";
+      var inner = "", any = false;
+      while (pi < plan.length && plan[pi].si === si) {
+        inner += plainItemHtml(plan[pi], cur.idx);
+        pi++; any = true;
+      }
+      h += (any ? head + inner : head);
     });
-    (pl.labs || []).forEach(function (lab, i) {
-      h += '<div class="lab"><div class="lab-t">试一试</div>' +
-        '<div class="lab-q">' + md(lab.q) + "</div>" +
-        (lab.fig ? '<div class="figbox" id="plain-fig-' + cur.idx + "-" + i + '"></div>' : "") +
-        (lab.hint ? '<div class="lab-hint">' + md(lab.hint) + "</div>" : "") +
-        "</div>";
-    });
+    while (pi < plan.length) { h += plainItemHtml(plan[pi], cur.idx); pi++; }
+
     if (pl.quote) h += '<div class="plain-quote">' + md(pl.quote) + "</div>";
     if (pl.table) {
       h += '<table class="plain-tb"><thead><tr>' +
@@ -734,26 +801,53 @@ var App = (function () {
     return h;
   }
 
-  /* 人话层展开时才把交互图挂上去 */
+  /* 人话层展开时才把交互图挂上去；小检验的按钮也要在这儿接上线 */
   function bindPlain(it) {
     var pl = it.plain;
     if (!pl) return;
     var det = $("plain-" + cur.idx);
     if (!det) return;
+    var plan = plainPlan(pl);
+    var done = false;
     function mount() {
-      if (!det.open) return;
-      (pl.labs || []).forEach(function (lab, i) {
-        if (!lab.fig) return;
-        var box = $("plain-fig-" + cur.idx + "-" + i);
+      if (!det.open || done) return;
+      done = true;
+      plan.forEach(function (p) {
+        if (p.kind !== "lab" || !p.v.fig) return;
+        var box = $("plain-fig-" + cur.idx + "-" + p.n);
         if (!box) return;
-        if (typeof VZ !== "undefined" && VZ.has(lab.fig)) VZ.fig(lab.fig, box);
+        if (typeof VZ !== "undefined" && VZ.has(p.v.fig)) VZ.fig(p.v.fig, box);
         else box.innerHTML = '<div class="viz-missing">这个实验没载入（多半是浏览器缓存了旧脚本）——刷新一下就好。</div>';
       });
+      bindPlainChecks(plan);
       if (typeof MT !== "undefined") MT.ready && fitWideMath(det);
     }
     det.addEventListener("toggle", mount);
     /* 已经展开着（从别处切回来）也要补挂 */
     if (det.open) mount();
+  }
+
+  /* 小检验：选一个，当场判对错，并把解释亮出来 */
+  function bindPlainChecks(plan) {
+    plan.forEach(function (p) {
+      if (p.kind !== "check") return;
+      var box = $("plain-check-" + cur.idx + "-" + p.n);
+      if (!box || box.getAttribute("data-bound")) return;
+      box.setAttribute("data-bound", "1");
+      var right = parseInt(box.getAttribute("data-right"), 10) || 0;
+      var why = box.querySelector(".plain-check-why");
+      Array.prototype.forEach.call(box.querySelectorAll(".pcheck-opt"), function (b, i) {
+        b.onclick = function () {
+          Array.prototype.forEach.call(box.querySelectorAll(".pcheck-opt"), function (x, j) {
+            x.classList.remove("right", "wrong");
+            if (j === right) x.classList.add("right");
+            else if (j === i) x.classList.add("wrong");
+          });
+          if (why) why.hidden = false;
+          box.classList.add("answered");
+        };
+      });
+    });
   }
 
   function notesHtml(it) {

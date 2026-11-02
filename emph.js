@@ -18,7 +18,7 @@ var EMPH = (function () {
   /* 建文本地图时要跳过的容器：公式、ASCII 示意图、块标题、按钮、卡点问句。
      注意别把 .key / .turn 也跳过——同一段可能连续标两处，若第二次建图时跳过
      已标好的部分，后面的偏移就全错位了（会抛 parent.insertBefore of null）。 */
-  var SKIP = /(^| )(katex|katex-display|viz-line|math-line|blk-t|orig-t|btn|opt|pill|note-q)( |$)/;
+  var SKIP = /(^| )(katex|katex-display|viz-line|math-line|blk-t|orig-t|btn|opt|pill|note-q|plainwrap)( |$)/;
   function skipEl(el) {
     if (!el || el.nodeType !== 1) return false;
     var tag = el.tagName;
@@ -32,6 +32,10 @@ var EMPH = (function () {
     var c = el.className;
     return typeof c === "string" && /(^| )(term|key|turn)( |$)/.test(c);
   }
+  /* 人话层不参与术语标记。
+     原文那一层已经标过一遍了：同一个词在两段平行文字里各标一次，
+     读者会当成两套体系。更要紧的是人话层是暖橙底，冷青的术语色压在上面
+     整块跑色，破坏它自己的版面节奏。术语在「」里本来就自带标记。 */
 
   function reset(chN) { cur = String(chN); if (!seen[cur]) seen[cur] = {}; }
 

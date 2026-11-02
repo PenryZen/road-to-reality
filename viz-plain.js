@@ -123,7 +123,7 @@ VZ.define({
       g.beginPath(); g.arc(o1[0], o1[1], S0, 0, Math.PI * 2);
       g.strokeStyle = "rgba(255,207,92,.35)"; g.lineWidth = 1.4; g.stroke();
       g.setLineDash([]);
-      g.beginPath(); g.arc(o1[0], o1[1], 4, 0, Math.PI * 2); g.fillStyle = C.bad; g.fill();
+      g.beginPath(); g.arc(o1[0], o1[1], 4, 0, Math.PI * 2); g.fillStyle = C.red; g.fill();
       g.fillStyle = "rgba(255,207,92,.55)";
       g.font = "10px -apple-system,PingFang SC,sans-serif";
       g.fillText("单位圆", o1[0] + S0 + 5, o1[1] - 5);
@@ -139,7 +139,7 @@ VZ.define({
             var q = P2(pts[i]);
             i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]);
           }
-          g.strokeStyle = C.bad; g.lineWidth = 3; g.stroke();
+          g.strokeStyle = C.red; g.lineWidth = 3; g.stroke();
         } else {
           var fc = fitCircle(pts);
           if (fc) {
@@ -156,13 +156,13 @@ VZ.define({
       g.beginPath(); g.arc(o2[0], o2[1], k2, 0, Math.PI * 2);
       g.strokeStyle = "rgba(255,207,92,.35)"; g.lineWidth = 1.4; g.stroke();
       g.setLineDash([]);
-      g.beginPath(); g.arc(o2[0], o2[1], 4, 0, Math.PI * 2); g.fillStyle = C.bad; g.fill();
+      g.beginPath(); g.arc(o2[0], o2[1], 4, 0, Math.PI * 2); g.fillStyle = C.red; g.fill();
 
       g.font = "11px -apple-system,PingFang SC,sans-serif";
       g.fillStyle = C.dim;
       g.fillText("z 平面（拖动圆心）", 10, 18);
       g.fillText("w 平面（像）", PW + 10, 18);
-      g.fillStyle = through ? C.bad : C.green;
+      g.fillStyle = through ? C.red : C.green;
       g.fillText(through ? "像绷直了 —— 直线" : "像仍然是圆", PW + 10, H - 12);
     }
 
@@ -432,8 +432,8 @@ VZ.define({
         var atOrigin = Math.hypot(z0[0], z0[1]) < 1e-6;
         var lx = pz[0] + (atOrigin ? 12 : 10), ly = pz[1] + (atOrigin ? 20 : -7);
         g.beginPath(); g.arc(pz[0], pz[1], 7, 0, Math.PI * 2);
-        g.fillStyle = C.bad; g.fill(); g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
-        g.fillStyle = C.bad; g.font = "10.5px -apple-system,PingFang SC,sans-serif";
+        g.fillStyle = C.red; g.fill(); g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
+        g.fillStyle = C.red; g.font = "10.5px -apple-system,PingFang SC,sans-serif";
         g.fillText("z₀ = −d/c", lx, ly);
       }
       var o1 = P1([0, 0]);
@@ -506,6 +506,711 @@ VZ.define({
       format: function (v) { return "×" + v.toFixed(2); },
       onInput: function (v) { zoom = v; refresh(); }
     });
+    refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL4 · 切开 vs 盖楼：两种处理多值的办法并排看
+   左：沿正实轴切一刀，缝上的点从此没有定义。
+   右：把这条缝接起来，绕原点一圈就升一层。
+   ------------------------------------------------------------ */
+"f-pl-slice": {
+  title: "",
+  hint: "左边是老办法：沿正实轴切一刀，<b>缝上的点从此没有定义</b>。右边是黎曼的办法：把这条缝<b>接上</b>——绕原点一圈升一层。拖「绕行角 θ」，看金点怎么爬楼：<span class='hl'>同一个 z 到了不同的层，就有了不同的 log 值</span>。",
+  draw: function (stage) {
+    var W = 720, H = 300, C = VZ.C, TAU = Math.PI * 2;
+    var svg = VZ.S(stage, W, H, { bg: C.deep });
+    var theta = 0.85;
+
+    /* ---------- 左：切开 ---------- */
+    var cx = 158, cy = 156, R = 88;
+    var gl = VZ.g(svg);
+    VZ.txt(gl, cx - R, 24, "老办法：切开", { size: 13, fill: "rgba(242,236,223,.86)", weight: "bold" });
+    VZ.circ(gl, cx, cy, R, { fill: "rgba(79,227,240,.05)", stroke: "rgba(201,194,230,.45)", "stroke-width": 1.4 });
+    VZ.ln(gl, cx - R - 16, cy, cx + R + 20, cy, { stroke: "rgba(201,194,230,.35)", "stroke-width": 1 });
+    VZ.ln(gl, cx, cy - R - 14, cx, cy + R + 14, { stroke: "rgba(201,194,230,.35)", "stroke-width": 1 });
+    VZ.txt(gl, cx + R + 20, cy + 16, "Re", { size: 10.5, fill: C.dim });
+    VZ.txt(gl, cx + 5, cy - R - 18, "Im", { size: 10.5, fill: C.dim });
+    /* 切缝的两条边 */
+    VZ.ln(gl, cx - 3, cy - 3.5, cx + R + 14, cy - 3.5, { stroke: C.red, "stroke-width": 2.4 });
+    VZ.ln(gl, cx - 3, cy + 3.5, cx + R + 14, cy + 3.5, { stroke: C.red, "stroke-width": 2.4 });
+    VZ.txt(gl, cx + 12, cy - 9, "切缝", { size: 10.5, fill: C.red, weight: "bold" });
+    /* 缝上打一个叉：这地方「没有定义」 */
+    var xc = cx + 42;
+    VZ.ln(gl, xc - 5, cy - 5, xc + 5, cy + 5, { stroke: C.red, "stroke-width": 2 });
+    VZ.ln(gl, xc - 5, cy + 5, xc + 5, cy - 5, { stroke: C.red, "stroke-width": 2 });
+    VZ.txt(gl, cx - R, cy + R + 24, "缝上的点：没有定义", { size: 12.5, fill: "rgba(242,236,223,.78)" });
+
+    /* ---------- 右：盖楼 ---------- */
+    var hx = 528, hy = 218, rx = 82, ry = 22, rise = 66;
+    var gr = VZ.g(svg);
+    VZ.txt(gr, hx - rx, 24, "新办法：盖楼", { size: 13, fill: "rgba(242,236,223,.86)", weight: "bold" });
+    /* 楼梯井中轴 */
+    VZ.ln(gr, hx, hy - rise * 2 - 30, hx, hy + 16, { stroke: "rgba(139,140,181,.35)", "stroke-width": 1, "stroke-dasharray": "3 4" });
+
+    function helixP(t) {
+      return [hx + rx * Math.cos(t), hy - ry * Math.sin(t) - (rise / TAU) * t];
+    }
+    var pts = [], i;
+    for (i = 0; i <= 240; i++) pts.push(helixP(i / 240 * TAU * 2));
+    VZ.poly(gr, pts, { stroke: C.ink, "stroke-width": 2.2, fill: "none", "stroke-linejoin": "round" });
+    /* 每圈的「地板」：把同一圈的点用淡线连一下，像坡道的台阶 */
+    for (var k = 0; k < 2; k++) {
+      var f = [], t0 = k * TAU;
+      for (i = 0; i <= 60; i++) {
+        var t = t0 + i / 60 * TAU;
+        var p = helixP(t);
+        f.push([p[0], p[1] + 8]);
+      }
+      VZ.poly(gr, f, { stroke: "rgba(242,236,223,.20)", "stroke-width": 1, fill: "none" });
+    }
+    /* 层标 */
+    for (i = 0; i < 3; i++) {
+      var lp = helixP(i * TAU);
+      VZ.circ(gr, lp[0], lp[1], 3.2, { fill: C.gold });
+      VZ.txt(gr, lp[0] + 10, lp[1] - 4, "第 " + i + " 层", { size: 11, fill: "rgba(255,207,92,.85)" });
+    }
+    /* 金点（当前所在层）：一条虚线垂到它落脚的那一层，看得更清楚 */
+    var dot = VZ.circ(gr, 0, 0, 6.5, { fill: C.gold, stroke: C.deep, "stroke-width": 2 });
+    var drop = VZ.ln(gr, 0, 0, 0, 0, { stroke: "rgba(255,207,92,.45)", "stroke-width": 1.2, "stroke-dasharray": "3 3" });
+
+    /* ---------- 中间的连接提示 ---------- */
+    VZ.path(svg, "M" + (cx + R + 30) + " " + (cy - 30) + "L" + (hx - rx + 8) + " " + (hy - 10), {
+      stroke: "rgba(255,176,138,.55)", "stroke-width": 1.6, fill: "none", "stroke-dasharray": "5 4"
+    });
+    VZ.txt(svg, cx + R + 34, cy - 38, "把缝的两边接起来", { size: 11.5, fill: "rgba(255,176,138,.9)" });
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "绕行角 θ": "", "当前层": "", "同一个 z": "", "log z 的值": "" });
+    VZ.slider(ctl, {
+      label: "绕行角 θ", min: 0, max: 360, step: 1, value: theta * 180 / Math.PI,
+      format: function (v) { return Math.round(v) + "°"; },
+      onInput: function (v) { theta = v * Math.PI / 180; refresh(); }
+    });
+    VZ.btn(ctl, "绕满一圈", function () { theta = theta + TAU; refresh(); });
+    VZ.btn(ctl, "复位", function () { theta = 0.85; refresh(); });
+
+    function refresh() {
+      var t = theta % TAU;
+      var p = helixP(theta);
+      var lp = helixP(Math.floor(theta / TAU) * TAU);
+      dot.setAttribute("cx", p[0]); dot.setAttribute("cy", p[1]);
+      drop.setAttribute("x1", p[0]); drop.setAttribute("y1", p[1]);
+      drop.setAttribute("x2", lp[0]); drop.setAttribute("y2", lp[1]);
+      var zx = Math.cos(t), zy = Math.sin(t);
+      VZ.setPanel(pan, {
+        "绕行角 θ": Math.round(theta * 180 / Math.PI) + "°",
+        "当前层": "第 " + (Math.floor(theta / TAU) + 1) + " 层",
+        "同一个 z": "z = cos θ + i sin θ = " + zx.toFixed(3) + " + " + zy.toFixed(3) + "i",
+        "log z 的值": "iθ = " + (theta * 180 / Math.PI).toFixed(0) + "°（弧度 " + theta.toFixed(3) + "）"
+      });
+    }
+    refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL5 · 流形：局部看起来都是平的
+   一个起伏的曲面网格 + 放大滑块。放大到足够近，网格就是平的。
+   ------------------------------------------------------------ */
+"f-pl-local": {
+  title: "",
+  hint: "拖「放大倍数」：<b>远看</b>是一张起伏的曲面，<b>近看</b>它就摊成了一张平平的网。这就是流形的定义——<span class='hl'>每一点附近都能摊平</span>，哪怕整张面弯成一团。",
+  draw: function (stage) {
+    var W = 720, H = 320, C = VZ.C;
+    var cv = VZ.canvas(stage, W, H, { maxDpr: 2 });
+    var g = cv.ctx;
+    var zoom = 1;
+
+    function h(x, y) { return 0.62 * Math.sin(1.05 * x) * Math.cos(0.92 * y); }
+
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      g.fillStyle = C.deep; g.fillRect(0, 0, W, H);
+      var cx = W / 2, cy = H / 2 + 18;
+      var S = 40;                       /* 投影尺度 */
+      var win = 3.0 / zoom;             /* 视野半宽 */
+      var N = 13, M = 26;
+
+      function px(x, y) {
+        var hh = h(x, y);
+        return [cx + (x - y) * S, cy + (x + y) * S * 0.46 - hh * S * 0.62];
+      }
+
+      /* 网格：两组线都画，靠画家算法排序 */
+      var segs = [];
+      var i, j;
+      for (i = 0; i < N; i++) {
+        var u = -win + 2 * win * i / (N - 1);
+        for (j = 0; j < M - 1; j++) {
+          var v0 = -win + 2 * win * j / (M - 1), v1 = -win + 2 * win * (j + 1) / (M - 1);
+          var A = px(u, v0), B = px(u, v1);
+          segs.push({ a: A, b: B, z: (u + v0) / 2, t: 0 });
+        }
+      }
+      for (j = 0; j < N; j++) {
+        var v = -win + 2 * win * j / (N - 1);
+        for (i = 0; i < M - 1; i++) {
+          var u0 = -win + 2 * win * i / (M - 1), u1 = -win + 2 * win * (i + 1) / (M - 1);
+          var A2 = px(u0, v), B2 = px(u1, v);
+          segs.push({ a: A2, b: B2, z: (u0 + v) / 2, t: 1 });
+        }
+      }
+      segs.sort(function (A, B) { return A.z - B.z; });
+      for (var k = 0; k < segs.length; k++) {
+        var s = segs[k];
+        var near = s.z < 0;
+        g.beginPath();
+        g.moveTo(s.a[0], s.a[1]); g.lineTo(s.b[0], s.b[1]);
+        g.strokeStyle = s.t === 0
+          ? (near ? "rgba(79,227,240,.42)" : "rgba(79,227,240,.16)")
+          : (near ? "rgba(255,111,216,.38)" : "rgba(255,111,216,.14)");
+        g.lineWidth = near ? 1.5 : 1;
+        g.stroke();
+      }
+      /* 中心点（局部摊平的那个点） */
+      var c0 = px(0, 0);
+      g.beginPath(); g.arc(c0[0], c0[1], 6, 0, 6.2832);
+      g.fillStyle = C.gold; g.fill();
+      g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
+
+      /* 视野内最大起伏 */
+      var mx = 0;
+      for (i = 0; i <= 20; i++) for (j = 0; j <= 20; j++) {
+        var x = -win + 2 * win * i / 20, y = -win + 2 * win * j / 20;
+        mx = Math.max(mx, Math.abs(h(x, y)));
+      }
+      g.font = "11px -apple-system,PingFang SC,sans-serif";
+      g.fillStyle = C.dim;
+      g.fillText("视野：整个曲面  →  中心的一小块", 12, 20);
+      g.fillStyle = mx < 0.18 ? C.green : (mx < 0.42 ? C.gold : C.red);
+      g.fillText("视野内最大起伏 ≈ " + mx.toFixed(3), 12, H - 14);
+      g.fillStyle = mx < 0.18 ? C.green : C.dim;
+      g.fillText(mx < 0.18 ? "已经看起来是平的了" : "还看得出弯", 178, H - 14);
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "放大倍数": "", "视野大小": "", "看起来": "" });
+    VZ.slider(ctl, {
+      label: "放大倍数", min: 1, max: 14, step: 0.1, value: zoom,
+      format: function (v) { return "×" + v.toFixed(1); },
+      onInput: function (v) { zoom = v; refresh(); }
+    });
+    VZ.btn(ctl, "拉到最近", function () { zoom = 14; refresh(); });
+    VZ.btn(ctl, "复位", function () { zoom = 1; refresh(); });
+
+    function refresh() {
+      draw();
+      var win = 3.0 / zoom;
+      var mx = 0, i, j;
+      for (i = 0; i <= 20; i++) for (j = 0; j <= 20; j++) {
+        var x = -win + 2 * win * i / 20, y = -win + 2 * win * j / 20;
+        mx = Math.max(mx, Math.abs(h(x, y)));
+      }
+      VZ.setPanel(pan, {
+        "放大倍数": "×" + zoom.toFixed(1),
+        "视野大小": "边长 " + (2 * win).toFixed(2) + "（整个曲面是 6）",
+        "看起来": mx < 0.18 ? "平的 —— 局部就是一张平面" : (mx < 0.42 ? "快平了" : "还是弯的")
+      });
+    }
+    refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL6 · w = az + b：平移、旋转、缩放
+   唯一一类「把整个平面搬到整个平面、不翻面、还保共形」的映射。
+   ------------------------------------------------------------ */
+"f-pl-linear": {
+  title: "",
+  hint: "拖三个滑块：<b>平移 b</b>、<b>旋转 θ</b>、<b>放大 a</b>。左边的单位圆与两条半径映到右边——<span class='hl'>圆还是圆，直线还是直线，夹角一分不差</span>。这类映射是全纯的，而且只有它能把整个平面搬到整个平面。",
+  draw: function (stage) {
+    var W = 720, H = 300, C = VZ.C;
+    var cv = VZ.canvas(stage, W, H, { maxDpr: 2 });
+    var g = cv.ctx;
+    var th = 0.55, sc = 1.25, tx = 0.55, ty = 0.15;
+
+    function map(x, y) {
+      var c = Math.cos(th), s = Math.sin(th);
+      return [sc * (c * x - s * y) + tx, sc * (s * x + c * y) + ty];
+    }
+    var PW = W / 2;
+    var S = Math.min(PW, H) / 2 / 2.55;
+
+    function P1(x, y) { return [PW * 0.5 + x * S, H / 2 - y * S]; }
+    function P2(x, y) { var q = map(x, y); return [PW + PW * 0.5 + q[0] * S, H / 2 - q[1] * S]; }
+
+    function axes(P, x0, x1) {
+      g.save();
+      g.beginPath(); g.rect(x0, 0, x1 - x0, H); g.clip();
+      g.strokeStyle = "rgba(75,67,128,.55)"; g.lineWidth = 1;
+      var i;
+      for (i = -8; i <= 8; i++) {
+        var x = i * 0.5;
+        var a = P(x, -2.2), b = P(x, 2.2);
+        g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+      }
+      for (i = -5; i <= 5; i++) {
+        var y = i * 0.5;
+        var a2 = P(-2.4, y), b2 = P(2.4, y);
+        g.beginPath(); g.moveTo(a2[0], a2[1]); g.lineTo(b2[0], b2[1]); g.stroke();
+      }
+      g.restore();
+    }
+
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      g.fillStyle = C.deep; g.fillRect(0, 0, W, H);
+      /* 两栏各自裁剪：右栏的网格是斜的，不能压到左栏 */
+      g.save();
+      g.beginPath(); g.rect(0, 0, PW, H); g.clip();
+      axes(P1, 0, PW);
+      g.restore();
+      g.save();
+      g.beginPath(); g.rect(PW, 0, PW, H); g.clip();
+      axes(P2, PW, W);
+      g.restore();
+      /* 分栏线 */
+      g.strokeStyle = "rgba(75,67,128,.55)"; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(PW, 8); g.lineTo(PW, H - 8); g.stroke();
+
+      /* 原图形：单位圆 + 两条半径 */
+      var seg = [], i;
+      for (i = 0; i <= 64; i++) {
+        var t = i / 64 * Math.PI * 2;
+        seg.push([Math.cos(t), Math.sin(t)]);
+      }
+      function shape(P, col, lw) {
+        g.beginPath();
+        for (var i = 0; i < seg.length; i++) {
+          var p = P(seg[i][0], seg[i][1]);
+          i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]);
+        }
+        g.closePath();
+        g.strokeStyle = col; g.lineWidth = lw; g.stroke();
+        /* 两条半径：一条实轴、一条虚轴，映射后夹角应保持 90° */
+        var o = P(0, 0), e1 = P(1, 0), e2 = P(0, 1);
+        g.beginPath(); g.moveTo(o[0], o[1]); g.lineTo(e1[0], e1[1]);
+        g.strokeStyle = col; g.lineWidth = lw * .85; g.stroke();
+        g.beginPath(); g.moveTo(o[0], o[1]); g.lineTo(e2[0], e2[1]);
+        g.strokeStyle = col; g.lineWidth = lw * .85; g.stroke();
+        g.beginPath(); g.arc(o[0], o[1], 4, 0, 6.2832); g.fillStyle = col; g.fill();
+      }
+      shape(P1, C.gold, 2.4);
+      shape(P2, C.green, 2.6);
+
+      g.font = "11px -apple-system,PingFang SC,sans-serif";
+      g.fillStyle = C.dim;
+      g.fillText("z 平面", 10, 18);
+      g.fillText("w 平面（w = az + b）", PW + 10, 18);
+      g.fillStyle = C.gold;
+      g.fillText("单位圆 + 两条半径", 10, H - 12);
+      g.fillStyle = C.green;
+      g.fillText("像：圆仍是圆，直线仍是直线", PW + 10, H - 12);
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "变换": "", "夹角": "", "单位圆的像": "", "结论": "" });
+    VZ.slider(ctl, {
+      label: "旋转 θ", min: -3.14, max: 3.14, step: 0.01, value: th,
+      format: function (v) { return (v * 180 / Math.PI).toFixed(0) + "°"; },
+      onInput: function (v) { th = v; refresh(); }
+    });
+    VZ.slider(ctl, {
+      label: "放大 a", min: 0.2, max: 2.5, step: 0.01, value: sc,
+      format: function (v) { return "×" + v.toFixed(2); },
+      onInput: function (v) { sc = v; refresh(); }
+    });
+    VZ.slider(ctl, {
+      label: "平移 b（实部）", min: -1.5, max: 1.5, step: 0.01, value: tx,
+      format: function (v) { return v.toFixed(2); },
+      onInput: function (v) { tx = v; refresh(); }
+    });
+    VZ.btn(ctl, "复位", function () { th = 0.55; sc = 1.25; tx = 0.55; ty = 0.15; refresh(); });
+
+    function refresh() {
+      draw();
+      var c = Math.cos(th), s = Math.sin(th);
+      VZ.setPanel(pan, {
+        "变换": "w = " + sc.toFixed(2) + "·e^{i" + (th * 180 / Math.PI).toFixed(0) + "°}·z + (" + tx.toFixed(2) + ", " + ty.toFixed(2) + ")",
+        "夹角": "90° → 90°（一分不差）",
+        "单位圆的像": "圆心 (" + tx.toFixed(2) + ", " + ty.toFixed(2) + ")，半径 " + sc.toFixed(2),
+        "结论": "旋转 + 放大 + 平移：保角、保定向、还保圆"
+      });
+    }
+    refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL7 · 球面上的实轴与单位圆：转 90° 就换个身份
+   ------------------------------------------------------------ */
+"f-pl-rot": {
+  title: "",
+  hint: "拖「自转角 φ」把球转起来：<b>金圈</b>是实轴（连同 ∞ 一起的那条大圆），<b>青圈</b>是单位圆。转到 <b>90°</b> 时，金圈正好压在青圈上——<span class='hl'>在球面上，「哪条线叫实轴」只是你把球怎么转的问题</span>。",
+  draw: function (stage) {
+    var W = 760, H = 380, C = VZ.C, TAU = Math.PI * 2;
+    var phi = 0;
+    var api = VZ.stage3(stage, W, H, paint, { yaw: -0.55, pitch: 0.42, dist: 5.0 });
+
+    function paint(ctx, w, h, fr) {
+      var proj = fr.proj, R = 1.24;
+      ctx.clearRect(0, 0, w, h);
+      function sph(t, p) {
+        var st = Math.sin(t);
+        return [R * st * Math.cos(p), R * st * Math.sin(p), R * Math.cos(t)];
+      }
+      /* 球面网格 */
+      var i, j, pts;
+      for (i = 1; i < 7; i++) {
+        var t = i / 7 * Math.PI;
+        pts = [];
+        for (j = 0; j <= 72; j++) pts.push(sph(t, j / 72 * TAU));
+        VZ.m3wire(ctx, pts, proj, "rgba(201,194,230,.20)", 1);
+      }
+      for (j = 0; j < 10; j++) {
+        var p = j / 10 * TAU;
+        pts = [];
+        for (i = 0; i <= 40; i++) pts.push(sph(i / 40 * Math.PI, p));
+        VZ.m3wire(ctx, pts, proj, "rgba(201,194,230,.16)", 1);
+      }
+      /* 单位圆（赤道）——画成虚线：转到 90° 时金圈压上来，
+         虚线还露在缝里，一眼看出「两者是同一条大圆」 */
+      pts = [];
+      for (i = 0; i <= 96; i++) { var a = i / 96 * TAU; pts.push([R * Math.cos(a), R * Math.sin(a), 0]); }
+      /* 实轴大圆：绕 x 轴自转 φ
+         实轴 = 过两极大圆（在 xz 平面里）；单位圆 = 赤道（在 xy 平面里）。
+         绕 x 轴转 90°，xz 平面恰好转到 xy 平面 —— 实轴就压到单位圆上了。
+         （绕 y 轴转是错的：那只是把这条大圆在自己平面里转，转多少都对不上。） */
+      pts = [];
+      for (i = 0; i <= 96; i++) {
+        var b = i / 96 * TAU;
+        pts.push([R * Math.sin(b), -R * Math.cos(b) * Math.sin(phi), R * Math.cos(b) * Math.cos(phi)]);
+      }
+      VZ.m3wire(ctx, pts, proj, C.gold, 3.2);
+      /* 赤道画在金圈之上（虚线），重合时也看得见 */
+      pts = [];
+      for (i = 0; i <= 96; i++) { var a2 = i / 96 * TAU; pts.push([R * Math.cos(a2), R * Math.sin(a2), 0]); }
+      VZ.m3wire(ctx, pts, proj, C.cyan, 2.2, [7, 6]);
+      /* 两极 */
+      VZ.m3sphere(ctx, [0, 0, R], proj, 5, C.cyan, null);
+      VZ.m3sphere(ctx, [0, 0, -R], proj, 5, C.mag, null);
+      /* 只在极点旁写 N / S，长说明交给左上角的图例——贴着球心写长字必打架 */
+      var n0 = proj([0, 0, R * 1.06]), s0 = proj([0, 0, -R * 1.06]);
+      ctx.font = "bold 12px -apple-system,PingFang SC,sans-serif";
+      ctx.fillStyle = C.cyan;
+      ctx.fillText("N", n0[0] + 9, n0[1] + 4);
+      ctx.fillStyle = C.mag;
+      ctx.fillText("S", s0[0] + 9, s0[1] + 4);
+      /* 图例（放左上角，永远不与球上的东西打架） */
+      ctx.font = "12px -apple-system,PingFang SC,sans-serif";
+      var lx = 14, ly = 26;
+      var legend = [
+        [C.gold, "实轴（连同 ∞ 的一条大圆）"],
+        [C.cyan, "单位圆（赤道，虚线）"],
+        [C.cyan, "N：z = ∞"],
+        [C.mag, "S：z = 0"]
+      ];
+      for (var li = 0; li < legend.length; li++) {
+        if (li < 2) {
+          ctx.fillStyle = legend[li][0];
+          ctx.fillRect(lx, ly - 8, 14, 3);
+        } else {
+          ctx.beginPath(); ctx.arc(lx + 7, ly - 6, 4.5, 0, 6.2832);
+          ctx.fillStyle = legend[li][0]; ctx.fill();
+        }
+        ctx.fillStyle = "rgba(242,236,223,.72)";
+        ctx.fillText(legend[li][1], lx + 22, ly);
+        ly += 19;
+      }
+      /* 状态 */
+      ctx.font = "11px -apple-system,PingFang SC,sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,.34)";
+      ctx.fillText("拖动旋转视角 · 滚轮缩放", w - 150, 18);
+      var deg = (phi * 180 / Math.PI) % 360;
+      ctx.fillStyle = Math.abs(deg - 90) < 2 ? C.green : C.dim;
+      ctx.fillText(Math.abs(deg - 90) < 2
+        ? "金圈已经压在青圈上 —— 实轴与单位圆平权"
+        : "自转 " + deg.toFixed(0) + "°（转到 90° 就重合）", 14, h - 12);
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "自转角 φ": "", "实轴": "", "单位圆": "", "结论": "" });
+    var sld = VZ.slider(ctl, {
+      label: "自转角 φ", min: 0, max: 360, step: 1, value: 0,
+      format: function (v) { return v.toFixed(0) + "°"; },
+      onInput: function (v) { phi = v * Math.PI / 180; refresh(); }
+    });
+    VZ.btn(ctl, "转到 90°", function () { phi = Math.PI / 2; sld.set(90); refresh(); });
+    VZ.btn(ctl, "复位", function () { phi = 0; sld.set(0); refresh(); });
+
+    function refresh() {
+      api.redraw();
+      var deg = (phi * 180 / Math.PI) % 360;
+      VZ.setPanel(pan, {
+        "自转角 φ": deg.toFixed(0) + "°",
+        "实轴": "球上的一条大圆（含 ∞）",
+        "单位圆": "赤道，也是球上的一条大圆（虚线）",
+        "结论": Math.abs(deg - 90) < 2
+          ? "两者重合 —— 球面上没有「哪条更根本」"
+          : "转 90° 就能把实轴搬成单位圆"
+      });
+    }
+    refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL8 · 3g − 3：复模的个数与自变换的自由度
+   ------------------------------------------------------------ */
+"f-pl-moduli": {
+  title: "",
+  hint: "拖「亏格 g」：<b>金点</b>是复模（形状参数）的个数，<b>紫点</b>是连续自变换需要的复参数个数。<span class='hl'>两者的差永远是 3g − 3</span>——亏格 0 和 1 也不例外，只是那时候复模不再按 3g−3 数。",
+  draw: function (stage) {
+    var W = 720, H = 300, C = VZ.C;
+    var svg = VZ.S(stage, W, H, { bg: C.deep });
+    var g0 = 2;
+
+    function mv(g) {
+      if (g === 0) return { m: 0, s: 3 };
+      if (g === 1) return { m: 1, s: 1 };
+      return { m: 3 * g - 3, s: 0 };
+    }
+
+    var rowM = VZ.g(svg), rowS = VZ.g(svg);
+    function clear(g) { while (g.firstChild) g.removeChild(g.firstChild); }
+    function render() {
+      clear(rowM); clear(rowS);
+      var d = mv(g0);
+      VZ.txt(rowM, 18, 88, "复模（形状参数）m = " + d.m, { size: 13, fill: "rgba(255,207,92,.95)" });
+      VZ.txt(rowS, 18, 168, "自变换自由度 s = " + d.s, { size: 13, fill: "rgba(155,140,255,.95)" });
+      var i;
+      for (i = 0; i < d.m; i++) VZ.circ(rowM, 250 + i * 21, 83, 7, { fill: C.gold });
+      for (i = 0; i < d.s; i++) VZ.circ(rowS, 250 + i * 21, 163, 7, { fill: C.violet });
+      if (d.m === 0) VZ.txt(rowM, 250, 88, "（没有——球面没有形状可言）", { size: 12, fill: "rgba(255,207,92,.6)" });
+      if (d.s === 0) VZ.txt(rowS, 250, 168, "（没有——自变换只有离散的）", { size: 12, fill: "rgba(155,140,255,.6)" });
+      /* 结论 */
+      VZ.txt(svg, 18, 46, "亏格 g = " + g0, { size: 17, fill: "rgba(242,236,223,.92)", weight: "bold" });
+      VZ.txt(svg, 18, 224, "m − s = " + (d.m - d.s) + "　=　3g − 3 = " + (3 * g0 - 3),
+        { size: 17, fill: C.green, weight: "bold" });
+      VZ.txt(svg, 18, 252, g0 === 2 ? "g = 2 就有三个复模（双曲平面上的一片）"
+        : (g0 === 1 ? "g = 1 只剩一个复模 τ（环面的胖瘦）"
+        : (g0 === 0 ? "g = 0 是球面：没有形状参数，自变换却最自由"
+        : "g ≥ 2：复模个数按 3g − 3 数")),
+        { size: 12.5, fill: "rgba(242,236,223,.72)" });
+      VZ.txt(svg, 18, 274, "公式 m − s = 3g − 3 对 g = 0, 1 照样成立；只是那时 m 不等于 3g − 3",
+        { size: 11.5, fill: "rgba(255,255,255,.34)" });
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "亏格 g": "", "复模 m": "", "自由度 s": "", "m − s": "" });
+    var sld = VZ.slider(ctl, {
+      label: "亏格 g", min: 0, max: 8, step: 1, value: g0,
+      format: function (v) { return v.toFixed(0); },
+      onInput: function (v) { g0 = v; refresh(); }
+    });
+    var chipWrap = VZ.chips(ctl, ["0 球面", "1 环面", "2 双环面", "3 椒盐卷饼"], "2 双环面", function (k) {
+      g0 = parseInt(k.charAt(0), 10); sld.set(g0); refresh();
+    });
+
+    function refresh() {
+      render();
+      var d = mv(g0);
+      /* 滑块动了，芯片的高亮要跟上，别停在旧的那一个 */
+      Array.prototype.forEach.call(chipWrap.querySelectorAll(".viz-chip"), function (b, i) {
+        if (i === g0) b.classList.add("on"); else b.classList.remove("on");
+      });
+      VZ.setPanel(pan, {
+        "亏格 g": g0.toFixed(0),
+        "复模 m": d.m.toFixed(0),
+        "自由度 s": d.s.toFixed(0),
+        "m − s": (d.m - d.s) + " = 3g − 3 = " + (3 * g0 - 3)
+      });
+    }
+    refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL9 · 茹科夫斯基变换：w = ½(z + 1/z) 把圆拉成机翼
+   z 平面上取一个「过 z = −1 的圆」：圆心在 −a，半径 1 − a。
+   它经过 z = −1（那里 1/z 冲到 ∞），像的尾缘因此收成一道尖。
+   ------------------------------------------------------------ */
+"f-pl-joukowski": {
+  title: "",
+  hint: "拖<b>金点</b>看它在机翼上的像；拖「圆心离原点的距离 a」改变机翼的胖瘦。<span class='hl'>圆经过 z = −1</span>（那里 1/z 冲到 ∞），机翼的尾缘因此收成一道尖；a 越小，机翼越薄。",
+  draw: function (stage) {
+    var W = 720, H = 330, C = VZ.C, TAU = Math.PI * 2;
+    var cv = VZ.canvas(stage, W, H, { maxDpr: 2 });
+    var g = cv.ctx;
+    var a = 0.15, tt = 2.1;
+
+    var PW = W / 2;
+    var SL = 132;                       /* 左栏比例 */
+    var OX = -1.35, OY = 0;             /* 左栏视野起点 */
+    function P1(x, y) { return [24 + (x - OX) * SL, H / 2 - (y - OY) * SL]; }
+
+    /* 右栏：按像的实际外接框等比摆放，机翼永远在栏内居中 */
+    var SR = 100, EX = null;
+    function jouk(zx, zy) {
+      var d = zx * zx + zy * zy;
+      return [0.5 * (zx + zx / d), 0.5 * (zy - zy / d)];
+    }
+    function imgExtent() {
+      var c = -a, r = 1 - a;
+      var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (var i = 0; i <= 360; i++) {
+        var t = i / 360 * TAU;
+        var zx = c + r * Math.cos(t), zy = r * Math.sin(t);
+        var w = jouk(zx, zy);
+        x0 = Math.min(x0, w[0]); x1 = Math.max(x1, w[0]);
+        y0 = Math.min(y0, w[1]); y1 = Math.max(y1, w[1]);
+      }
+      return { x0: x0, x1: x1, y0: y0, y1: y1, w: x1 - x0, h: y1 - y0 };
+    }
+    function setSR() {
+      var e = imgExtent();
+      SR = Math.min((PW - 70) / Math.max(1e-4, e.w), (H - 90) / Math.max(1e-4, e.h));
+      EX = e;
+    }
+    function P2(x, y) {
+      var e = EX;
+      var ccx = (e.x0 + e.x1) / 2, ccy = (e.y0 + e.y1) / 2;
+      return [PW + PW / 2 + (x - ccx) * SR, H / 2 - (y - ccy) * SR];
+    }
+
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      g.fillStyle = C.deep; g.fillRect(0, 0, W, H);
+      var c = -a, r = 1 - a;
+
+      /* 左栏网格 */
+      g.save();
+      g.beginPath(); g.rect(0, 0, PW, H); g.clip();
+      g.strokeStyle = "rgba(75,67,128,.45)"; g.lineWidth = 1;
+      var i;
+      for (i = -6; i <= 4; i++) {
+        var p1 = P1(i * 0.25, -1.1), p2 = P1(i * 0.25, 1.1);
+        g.beginPath(); g.moveTo(p1[0], p1[1]); g.lineTo(p2[0], p2[1]); g.stroke();
+      }
+      for (i = -4; i <= 4; i++) {
+        var p3 = P1(-1.35, i * 0.25), p4 = P1(0.7, i * 0.25);
+        g.beginPath(); g.moveTo(p3[0], p3[1]); g.lineTo(p4[0], p4[1]); g.stroke();
+      }
+      g.restore();
+      /* 右栏网格（跟着变换一起转） */
+      g.save();
+      g.beginPath(); g.rect(PW, 0, PW, H); g.clip();
+      g.strokeStyle = "rgba(75,67,128,.38)"; g.lineWidth = 1;
+      for (i = -8; i <= 4; i++) {
+        var q1 = P2(i * 0.25, -1.1), q2 = P2(i * 0.25, 1.1);
+        g.beginPath(); g.moveTo(q1[0], q1[1]); g.lineTo(q2[0], q2[1]); g.stroke();
+      }
+      for (i = -4; i <= 4; i++) {
+        var q3 = P2(-2, i * 0.25), q4 = P2(2, i * 0.25);
+        g.beginPath(); g.moveTo(q3[0], q3[1]); g.lineTo(q4[0], q4[1]); g.stroke();
+      }
+      g.restore();
+      /* 分栏线 */
+      g.strokeStyle = "rgba(75,67,128,.55)"; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(PW, 8); g.lineTo(PW, H - 8); g.stroke();
+
+      /* 左：过 −1 的圆 */
+      var pc = P1(c, 0);
+      g.beginPath(); g.arc(pc[0], pc[1], r * SL, 0, TAU);
+      g.strokeStyle = C.gold; g.lineWidth = 2.6; g.stroke();
+      /* 原点 */
+      var po = P1(0, 0);
+      g.beginPath(); g.arc(po[0], po[1], 4, 0, TAU); g.fillStyle = C.ink; g.fill();
+      /* z = −1（尾缘的来源） */
+      var pm = P1(-1, 0);
+      g.beginPath(); g.arc(pm[0], pm[1], 5.5, 0, TAU);
+      g.fillStyle = C.red; g.fill(); g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
+      g.font = "10.5px -apple-system,PingFang SC,sans-serif";
+      g.fillStyle = C.red;
+      /* 标签右对齐到红点左边 10px：写死偏移会把「1」压在点底下 */
+      g.fillText("z = −1", pm[0] - 12 - g.measureText("z = −1").width, pm[1] + 22);
+
+      /* 右：机翼 */
+      g.beginPath();
+      for (i = 0; i <= 360; i++) {
+        var t = i / 360 * TAU;
+        var zx = c + r * Math.cos(t), zy = r * Math.sin(t);
+        var w = jouk(zx, zy);
+        var q = P2(w[0], w[1]);
+        i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]);
+      }
+      g.closePath();
+      g.strokeStyle = C.green; g.lineWidth = 2.8; g.stroke();
+      g.fillStyle = "rgba(94,224,138,.10)"; g.fill();
+      /* 尾缘（尖，w = −1）与前缘（圆头，w 的最大实部） */
+      var te = P2(-1, 0);
+      g.beginPath(); g.arc(te[0], te[1], 4, 0, TAU); g.fillStyle = C.red; g.fill();
+      g.fillStyle = C.red; g.fillText("尾缘", te[0] - 30, te[1] + 4);
+      var le = P2(EX.x1, (EX.y0 + EX.y1) / 2);
+      g.fillStyle = "rgba(94,224,138,.9)"; g.fillText("前缘", le[0] + 8, le[1] + 4);
+
+      /* 金点与其像 */
+      var zx2 = c + r * Math.cos(tt), zy2 = r * Math.sin(tt);
+      var pp = P1(zx2, zy2);
+      g.beginPath(); g.arc(pp[0], pp[1], 7, 0, TAU);
+      g.fillStyle = C.gold; g.fill(); g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
+      var w2 = jouk(zx2, zy2);
+      var pq = P2(w2[0], w2[1]);
+      g.beginPath(); g.arc(pq[0], pq[1], 7, 0, TAU);
+      g.fillStyle = C.gold; g.fill(); g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
+
+      g.font = "11px -apple-system,PingFang SC,sans-serif";
+      g.fillStyle = C.dim;
+      g.fillText("z 平面：过 −1 的圆", 10, 18);
+      g.fillText("w 平面：机翼截面", PW + 10, 18);
+      g.fillStyle = "rgba(255,255,255,.34)";
+      g.fillText("拖金点看它在机翼上的像", 10, H - 12);
+    }
+
+    var dragging = false;
+    function pickT(e) {
+      var r = cv.cv.getBoundingClientRect();
+      var sx = (e.clientX - r.left) / r.width * W;
+      var sy = (e.clientY - r.top) / r.height * H;
+      var c = -a, rr = 1 - a;
+      var zx = (sx - 24) / SL + OX, zy = -(sy - H / 2) / SL + OY;
+      tt = Math.atan2(zy, zx - c);
+      refresh();
+    }
+    cv.cv.addEventListener("pointerdown", function (e) {
+      var r = cv.cv.getBoundingClientRect();
+      if ((e.clientX - r.left) / r.width * W > PW) return;
+      dragging = true; pickT(e);
+      cv.cv.setPointerCapture && cv.cv.setPointerCapture(e.pointerId);
+    });
+    cv.cv.addEventListener("pointermove", function (e) { if (dragging) pickT(e); });
+    cv.cv.addEventListener("pointerup", function () { dragging = false; });
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "圆的参数 a": "", "弦长": "", "最大厚度": "", "拖动点": "" });
+    VZ.slider(ctl, {
+      label: "圆心离原点 a", min: 0.06, max: 0.45, step: 0.005, value: a,
+      format: function (v) { return "a = " + v.toFixed(3); },
+      onInput: function (v) { a = v; setSR(); refresh(); }
+    });
+    VZ.btn(ctl, "复位", function () { a = 0.15; tt = 2.1; setSR(); refresh(); });
+
+    function refresh() {
+      draw();
+      var e = imgExtent();
+      var c = -a, r = 1 - a;
+      var zx = c + r * Math.cos(tt), zy = r * Math.sin(tt);
+      var w = jouk(zx, zy);
+      VZ.setPanel(pan, {
+        "圆的参数 a": "a = " + a.toFixed(3) + "（半径 " + r.toFixed(3) + "，过 z = −1）",
+        "弦长": e.w.toFixed(4),
+        "最大厚度": e.h.toFixed(4),
+        "拖动点": "z = " + zx.toFixed(3) + " + " + zy.toFixed(3) + "i　→　w = " + w[0].toFixed(3) + " + " + w[1].toFixed(3) + "i"
+      });
+    }
+    setSR();
     refresh();
   }
 }

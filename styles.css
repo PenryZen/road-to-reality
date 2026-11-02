@@ -712,6 +712,10 @@ body.is-preview { padding-top: 34px; }
   border-radius:12px;
   background:rgba(255,176,138,.05);
   overflow:hidden;
+  /* 人话层整篇用楷体：跟精读正文同一副字，翻页时眼睛不用换字体。
+     楷体笔画比屏方细、比屏方小，所以字号一律比屏方版放大一档。 */
+  font-family:var(--kai);
+  letter-spacing:.01em;
 }
 /* 折叠头：做成一个真按钮的样子，而不是灰字链接 */
 .plain-sum{
@@ -723,12 +727,12 @@ body.is-preview { padding-top: 34px; }
 .plain-sum:hover{background:rgba(255,176,138,.10)}
 .plain-sum:focus-visible{outline:2px solid var(--warm);outline-offset:-2px}
 .plain-badge{
-  flex:none;font-size:11px;font-weight:700;letter-spacing:.1em;
+  flex:none;font-size:12.5px;font-weight:700;letter-spacing:.08em;
   color:var(--warm-ink);background:var(--warm);
   padding:2px 9px;border-radius:999px;
 }
 .plain-sum-t{
-  flex:1;min-width:0;font-size:14px;color:var(--warm);
+  flex:1;min-width:0;font-size:15.5px;color:var(--warm);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 /* 展开箭头：用两个方向的线画一个十字，收起时是 + */
@@ -747,41 +751,41 @@ body.is-preview { padding-top: 34px; }
   border-top:1px solid rgba(255,176,138,.22);
 }
 .plain-title{
-  font-size:18px;font-weight:700;color:#ffd9c6;line-height:1.6;
-  margin:14px 0 2px;
+  font-size:19.5px;font-weight:700;color:#ffd9c6;line-height:1.7;
+  margin:16px 0 2px;
 }
 .plain-kicker{
-  font-size:12px;color:var(--warm-dim);letter-spacing:.06em;margin-bottom:10px;
+  font-size:13px;color:var(--warm-dim);letter-spacing:.05em;margin-bottom:10px;
 }
-.plain-p{color:#f6e6dd}
+.plain-p{color:#f6e6dd;font-size:16.5px;line-height:2}
 .plain-p b{color:#ffe2cf;font-weight:700}
 .plain-p code{
   background:rgba(0,0,0,.32);padding:1px 5px;border-radius:4px;
-  font-size:13px;color:#ffd9c6;
+  font-size:14px;color:#ffd9c6;
 }
 .plain-quote{
   margin:16px 0;padding:12px 16px;
   border:1px solid rgba(255,176,138,.28);
   border-radius:10px;background:rgba(255,176,138,.07);
-  font-size:15.5px;line-height:1.9;color:#ffe2cf;
+  font-size:16.5px;line-height:1.95;color:#ffe2cf;
 }
 .plain-quote b{color:var(--warm)}
 .plain-tail{
   margin-top:16px;padding:12px 15px;
   border:1px solid rgba(255,176,138,.24);
   border-radius:10px;background:rgba(255,176,138,.05);
-  font-size:14.5px;line-height:1.85;color:#f6e6dd;
+  font-size:16px;line-height:1.9;color:#f6e6dd;
 }
 .plain-tail b{color:#ffd9c6}
 .plain-tb{
-  width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;
+  width:100%;border-collapse:collapse;margin:14px 0;font-size:15px;
   font-variant-numeric:tabular-nums;
 }
 .plain-tb th{
   background:rgba(255,176,138,.16);color:#ffd9c6;font-weight:700;
-  padding:7px 9px;text-align:left;border:1px solid rgba(255,176,138,.24);
+  padding:8px 10px;text-align:left;border:1px solid rgba(255,176,138,.24);
 }
-.plain-tb td{padding:7px 9px;border:1px solid rgba(255,176,138,.18);color:#f0e2da}
+.plain-tb td{padding:8px 10px;border:1px solid rgba(255,176,138,.18);color:#f0e2da}
 .plain-tb tr:nth-child(even) td{background:rgba(255,176,138,.05)}
 /* 「试一试」实验卡 */
 .lab{
@@ -790,25 +794,101 @@ body.is-preview { padding-top: 34px; }
   border-radius:11px;background:rgba(20,10,6,.30);
 }
 .lab-t{
-  font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--warm);
+  font-size:12.5px;font-weight:700;letter-spacing:.08em;color:var(--warm);
   margin-bottom:6px;
 }
 .lab-q{
-  font-size:15px;color:#ffe2cf;font-weight:700;line-height:1.75;margin-bottom:10px;
+  font-size:16.5px;color:#ffe2cf;font-weight:700;line-height:1.8;margin-bottom:10px;
 }
 .lab-hint{
-  margin-top:9px;font-size:12.5px;line-height:1.75;color:var(--warm-dim);
+  margin-top:9px;font-size:14px;line-height:1.85;color:var(--warm-dim);
 }
 .lab .figbox{margin:0}
 .lab .fig-title{color:var(--warm)}
+
+/* ---------- 行内环节：想一想 / 小检验 ----------
+   三个环节（试一试、想一想、小检验）都长在人话的叙述里，
+   跟当前段落挨着出现；配色统一在暖橙一族，只靠标签文字区分。 */
+.plain-tag{
+  display:inline-block;flex:none;
+  font-size:12.5px;font-weight:700;letter-spacing:.08em;color:var(--warm);
+  padding:1px 8px;border-radius:999px;
+  border:1px solid rgba(255,176,138,.34);
+  background:rgba(255,176,138,.10);
+  line-height:1.7;
+}
+/* 想一想：点一下展开答案 */
+.plain-ask{
+  margin:16px 0;
+  border:1px solid rgba(255,176,138,.22);
+  border-radius:11px;background:rgba(255,176,138,.035);
+  overflow:hidden;
+}
+.plain-ask-q{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:11px 14px;cursor:pointer;list-style:none;
+  user-select:none;
+}
+.plain-ask-q::-webkit-details-marker{display:none}
+.plain-ask-q:hover{background:rgba(255,176,138,.08)}
+.plain-ask-q:focus-visible{outline:2px solid var(--warm);outline-offset:-2px}
+.plain-ask-t{
+  flex:1;min-width:0;font-size:16.5px;font-weight:700;line-height:1.8;color:#ffe2cf;
+}
+.plain-ask-a{
+  padding:11px 14px 13px;
+  border-top:1px dashed rgba(255,176,138,.20);
+  font-size:16px;line-height:1.95;color:#f0e2da;
+}
+.plain-ask-a b{color:#ffe2cf}
+/* 小检验：选一个，当场判 */
+.plain-check{
+  margin:16px 0;padding:12px 14px 13px;
+  border:1px solid rgba(255,176,138,.22);
+  border-radius:11px;background:rgba(255,176,138,.035);
+}
+.plain-check-t{
+  display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap;
+  font-size:16.5px;font-weight:700;line-height:1.8;color:#ffe2cf;margin-bottom:10px;
+}
+.plain-check-q{flex:1;min-width:0}
+.plain-check-opts{display:flex;flex-direction:column;gap:7px}
+.pcheck-opt{
+  display:block;width:100%;text-align:left;cursor:pointer;
+  background:rgba(20,10,6,.32);
+  border:1px solid rgba(255,176,138,.20);
+  border-radius:9px;padding:9px 12px;
+  color:#f0e2da;font-family:var(--kai);font-size:15.5px;line-height:1.75;
+  transition:background .18s,border-color .18s;
+}
+.pcheck-opt:hover{background:rgba(255,176,138,.10);border-color:rgba(255,176,138,.40)}
+.pcheck-opt:focus-visible{outline:2px solid var(--warm);outline-offset:1px}
+.pcheck-opt.right{
+  border-color:rgba(74,222,128,.62);background:rgba(74,222,128,.13);color:#dcffe9;
+}
+.pcheck-opt.wrong{
+  border-color:rgba(255,122,122,.58);background:rgba(255,122,122,.11);color:#ffdcdc;
+}
+.plain-check-why{
+  margin-top:10px;padding-top:10px;
+  border-top:1px dashed rgba(255,176,138,.20);
+  font-size:15.5px;line-height:1.9;color:#f0e2da;
+}
+.plain-check-why b{color:#ffe2cf}
+
 /* 阅读模式：人话层跟着放大 */
-body.readmode #lv-stage .plain-title{font-size:22px}
+body.readmode #lv-stage .plain-title{font-size:23px}
 body.readmode #lv-stage .plain-p{font-size:19px;line-height:2.05}
-body.readmode #lv-stage .plain-sum-t{font-size:16px}
+body.readmode #lv-stage .plain-sum-t{font-size:17px}
 body.readmode #lv-stage .lab-q{font-size:19px}
 body.readmode #lv-stage .lab-hint{font-size:16px;line-height:1.9}
-body.readmode #lv-stage .plain-tb{font-size:15.5px}
+body.readmode #lv-stage .plain-tb{font-size:16.5px}
 body.readmode #lv-stage .plain-quote{font-size:19px;line-height:2}
+body.readmode #lv-stage .plain-ask-t{font-size:19px}
+body.readmode #lv-stage .plain-ask-a{font-size:18.5px;line-height:2}
+body.readmode #lv-stage .plain-check-t{font-size:19px}
+body.readmode #lv-stage .pcheck-opt{font-size:18px}
+body.readmode #lv-stage .plain-check-why{font-size:18px;line-height:2}
 
 /* 整段就是一条公式的：单独成行、居中，跟正文的 .math-line 一个规矩 */
 .plain-fml{
