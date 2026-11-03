@@ -1213,6 +1213,404 @@ VZ.define({
     setSR();
     refresh();
   }
+},
+
+/* ------------------------------------------------------------
+   PL10 · 正频率：半边频谱为零
+   §9.5 那一页的第一件事。左：f(χ) 的实部/虚部；右：|g(p)|。
+   拖 ω 看峰始终落在 p = −ω，p > 0 那一侧永远是空的。
+   ------------------------------------------------------------ */
+"f-pl-freqspec": {
+  title: "",
+  hint: "",
+  draw: function (stage) {
+    var C = VZ.C;
+    var nar = (stage.clientWidth || 720) < 560;
+    var W = nar ? 460 : 720, H = nar ? 430 : 300;
+    var cv = VZ.canvas(stage, W, H, { maxDpr: 2 });
+    var g = cv.ctx;
+    var SIG = 2, om = 3, sign = -1;
+    var A = nar ? { x: 0, y: 0, w: W, h: H / 2 - 12 } : { x: 0, y: 0, w: W / 2, h: H };
+    var B = nar ? { x: 0, y: H / 2 + 6, w: W, h: H / 2 - 12 } : { x: W / 2, y: 0, w: W / 2, h: H };
+    var F = "10.5px -apple-system,PingFang SC,sans-serif";
+
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      var S = Math.min(A.w, A.h) / 2 / 6.2;
+      var ax = A.x + A.w / 2, ay = A.y + A.h / 2;
+      var bx = B.x + B.w / 2, by = B.y + B.h / 2;
+      var i, x, y, px, py;
+
+      /* 左：f(χ) */
+      g.beginPath(); g.moveTo(A.x, ay); g.lineTo(A.x + A.w, ay);
+      g.strokeStyle = "rgba(255,255,255,.12)"; g.lineWidth = 1; g.stroke();
+      g.beginPath();
+      for (i = 0; i <= 420; i++) {
+        x = -5.5 + 11 * i / 420;
+        y = sign * Math.sin(om * x) * Math.exp(-x * x / (2 * SIG * SIG));
+        px = ax + x * S; py = ay - y * S;
+        i ? g.lineTo(px, py) : g.moveTo(px, py);
+      }
+      g.setLineDash([4, 3]); g.strokeStyle = "rgba(255,207,92,.42)"; g.lineWidth = 1.6; g.stroke();
+      g.setLineDash([]);
+      g.beginPath();
+      for (i = 0; i <= 420; i++) {
+        x = -5.5 + 11 * i / 420;
+        y = Math.cos(sign * om * x) * Math.exp(-x * x / (2 * SIG * SIG));
+        px = ax + x * S; py = ay - y * S;
+        i ? g.lineTo(px, py) : g.moveTo(px, py);
+      }
+      g.strokeStyle = C.gold; g.lineWidth = 2.2; g.stroke();
+
+      g.font = F; g.textAlign = "left"; g.textBaseline = "alphabetic";
+      g.fillStyle = C.dim;
+      g.fillText("f(χ)　实部 / 虚部", A.x + 10, A.y + 18);
+      g.fillStyle = C.gold;
+      g.fillText("e^" + (sign < 0 ? "−" : "+") + "i·" + om.toFixed(1) + "·χ · 高斯包络", A.x + 10, A.y + 34);
+
+      /* 右：|g(p)|，p>0 用底色标出来 */
+      var p0 = sign * om;
+      g.fillStyle = "rgba(255,122,122,.13)";
+      g.fillRect(bx, B.y, B.x + B.w - bx, B.h);
+      g.beginPath(); g.moveTo(B.x, by); g.lineTo(B.x + B.w, by);
+      g.strokeStyle = "rgba(255,255,255,.12)"; g.lineWidth = 1; g.stroke();
+      function gf(p) { return SIG * Math.exp(-SIG * SIG * (p - p0) * (p - p0) / 2); }
+      g.beginPath();
+      for (i = 0; i <= 420; i++) {
+        var p = -6.2 + 12.4 * i / 420;
+        px = bx + p * S; py = by - gf(p) * S;
+        i ? g.lineTo(px, py) : g.moveTo(px, py);
+      }
+      g.strokeStyle = C.cyan; g.lineWidth = 2.6; g.stroke();
+      var pkx = bx + p0 * S, pky = by - gf(p0) * S;
+      g.beginPath(); g.setLineDash([3, 3]);
+      g.moveTo(pkx, by); g.lineTo(pkx, pky);
+      g.strokeStyle = "rgba(79,227,240,.45)"; g.lineWidth = 1.2; g.stroke();
+      g.setLineDash([]);
+      g.beginPath(); g.arc(pkx, pky, 5, 0, Math.PI * 2);
+      g.fillStyle = C.cyan; g.fill();
+      g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
+      g.font = F; g.fillStyle = C.cyan;
+      g.fillText("p = " + p0.toFixed(2), pkx + (p0 < 0 ? -58 : 10), pky - 10);
+      g.fillStyle = C.dim;
+      g.fillText("|g(p)|", B.x + 10, B.y + 18);
+      g.fillStyle = "rgba(255,122,122,.9)";
+      g.fillText("p > 0：定义要求这里恒为 0", B.x + B.w - 168, B.y + B.h - 10);
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "峰落在": "", "p>0 一侧": "", "结论": "" });
+    VZ.chips(ctl, ["e^(−iωχ)　彭罗斯", "e^(+iωχ)　另一套"], "e^(−iωχ)　彭罗斯", function (k) {
+      sign = k.charAt(2) === "−" ? -1 : 1; draw(); refresh();
+    });
+    VZ.slider(ctl, {
+      label: "ω", min: 0.5, max: 5, step: 0.1, value: om,
+      format: function (v) { return v.toFixed(1); },
+      onInput: function (v) { om = v; draw(); refresh(); }
+    });
+    function refresh() {
+      var p0 = sign * om;
+      var res = Math.max(SIG * Math.exp(-SIG * SIG * (0.001 - p0) * (0.001 - p0) / 2),
+                         SIG * Math.exp(-SIG * SIG * (6 - p0) * (6 - p0) / 2));
+      VZ.setPanel(pan, {
+        "峰落在": "p = " + p0.toFixed(2) + "（= " + (sign < 0 ? "−" : "+") + "ω）",
+        "p>0 一侧": "|g| 最大只有 " + res.toExponential(1),
+        "结论": sign < 0 ? "两句话是同一件事" : "换了约定，峰翻面，仍等价"
+      });
+    }
+    draw(); refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL11 · 「正」说的是能量，不是 p
+   拖 E：p = −E/ħ 跟着翻号，而「正频率」这个称呼也跟着跑到另一边。
+   ------------------------------------------------------------ */
+"f-pl-freqenergy": {
+  title: "",
+  hint: "",
+  draw: function (stage) {
+    var C = VZ.C;
+    var nar = (stage.clientWidth || 720) < 560;
+    var W = nar ? 460 : 720, H = nar ? 250 : 240;
+    var cv = VZ.canvas(stage, W, H, { maxDpr: 2 });
+    var g = cv.ctx;
+    var E = 2, F = "11px -apple-system,PingFang SC,sans-serif";
+    var cy = H * 0.56;
+
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      var S = Math.min(W, H) / 2 / 3.4, cx = W / 2, p = -E;
+      g.beginPath(); g.moveTo(16, cy); g.lineTo(W - 16, cy);
+      g.strokeStyle = "rgba(255,255,255,.16)"; g.lineWidth = 1.4; g.stroke();
+      var px = cx + p * S;
+      g.beginPath(); g.moveTo(cx, cy); g.lineTo(px, cy);
+      g.strokeStyle = p < 0 ? C.green : C.red; g.lineWidth = 3.2; g.stroke();
+      var d = p < 0 ? -1 : 1;
+      g.beginPath(); g.moveTo(px, cy); g.lineTo(px - d * 9, cy - 6); g.lineTo(px - d * 9, cy + 6);
+      g.closePath(); g.fillStyle = p < 0 ? C.green : C.red; g.fill();
+      g.beginPath(); g.arc(px, cy, 6.5, 0, Math.PI * 2);
+      g.fillStyle = p < 0 ? C.green : C.red; g.fill();
+      g.strokeStyle = C.deep; g.lineWidth = 2.2; g.stroke();
+      g.font = F; g.textAlign = "left";
+      g.fillStyle = p < 0 ? C.green : C.red;
+      g.fillText("p = " + p.toFixed(2), px + (p < 0 ? -56 : 12), cy - 14);
+      g.fillStyle = C.dim; g.fillText("0", cx - 3, cy + 18);
+      g.fillStyle = C.ink;
+      g.fillText("能量 E = " + E.toFixed(1) + (E >= 0 ? "　正能量" : "　负能量"), 14, 22);
+      g.fillStyle = p < 0 ? C.green : C.red;
+      g.fillText("p = −E/ħ = " + p.toFixed(2) + (p < 0 ? "　→ 正频率" : "　→ 负频率"), 14, 42);
+      g.fillStyle = C.dim; g.font = "10px -apple-system,PingFang SC,sans-serif";
+      g.fillText("ψ(t) = ψ(0)·e^(−iEt/ħ)　写成标准形 e^(ipχ)　⇒　p = −E/ħ", 14, H - 12);
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var s = VZ.slider(ctl, {
+      label: "能量 E", min: -3, max: 3, step: 0.1, value: E,
+      format: function (v) { return v.toFixed(1); },
+      onInput: function (v) { E = v; draw(); refresh(); }
+    });
+    VZ.btn(ctl, "回到 E = +2", function () { E = 2; s.set(2); draw(); refresh(); });
+    var pan = VZ.panel(stage, { "能量": "", "p = −E/ħ": "", "叫法": "" });
+    function refresh() {
+      var p = -E;
+      VZ.setPanel(pan, {
+        "能量": "E = " + E.toFixed(2) + "（ħ = 1）",
+        "p = −E/ħ": "p = " + p.toFixed(2),
+        "叫法": p < 0 ? "正频率（p<0，但能量是正的）" : "负频率（p>0，能量却是负的）"
+      });
+    }
+    draw(); refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL12 · χ 平面 ↔ 黎曼球：实圆把球劈成两半
+   左：复平面（上半/下半着色）；右：球面上那条「实圆」。
+   注意：正交投影下，分界是**朝向镜头的那半大圆弧**，不是椭圆的里外。
+   ------------------------------------------------------------ */
+"f-pl-freqhalf": {
+  title: "",
+  hint: "",
+  draw: function (stage) {
+    var C = VZ.C;
+    var nar = (stage.clientWidth || 720) < 560;
+    var W = nar ? 460 : 720, H = nar ? 520 : 330;
+    var cv = VZ.canvas(stage, W, H, { maxDpr: 2 });
+    var g = cv.ctx;
+    var TH = 55 * Math.PI / 180, eta = 0;
+    var A = nar ? { x: 0, y: 0, w: W, h: H / 2 - 10 } : { x: 0, y: 0, w: W / 2, h: H };
+    var B = nar ? { x: 0, y: H / 2 + 6, w: W, h: H / 2 - 10 } : { x: W / 2, y: 0, w: W / 2, h: H };
+    var F = "10.5px -apple-system,PingFang SC,sans-serif";
+
+    function proj(X, Y, Z, R, cx, cy) {
+      var Zp = Y * Math.sin(TH) + Z * Math.cos(TH);
+      return [cx + X * R, cy - Zp * R];
+    }
+    function depth(X, Y, Z) { return Y * Math.cos(TH) - Z * Math.sin(TH); }
+
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      var i;
+
+      /* ---- 左：χ 复平面 ---- */
+      var S = Math.min(A.w, A.h) / 2 / 2.2;
+      var ax = A.x + A.w / 2, ay = A.y + A.h / 2;
+      g.save(); g.beginPath(); g.rect(A.x, A.y, A.w, A.h); g.clip();
+      g.fillStyle = "rgba(255,122,122,.15)"; g.fillRect(A.x, A.y, A.w, A.h / 2);
+      g.fillStyle = "rgba(106,168,255,.17)"; g.fillRect(A.x, ay, A.w, A.h / 2);
+      g.beginPath(); g.moveTo(A.x, ay); g.lineTo(A.x + A.w, ay);
+      g.strokeStyle = "rgba(255,207,92,.55)"; g.lineWidth = 2; g.stroke();
+      var px = ax + 0.6 * S, py = ay - eta * S;
+      g.beginPath(); g.moveTo(ax, ay); g.lineTo(px, py);
+      g.strokeStyle = "rgba(242,236,223,.35)"; g.lineWidth = 1.2; g.stroke();
+      g.beginPath(); g.arc(px, py, 7, 0, Math.PI * 2);
+      g.fillStyle = eta < 0 ? C.blue : (eta > 0 ? C.red : C.gold); g.fill();
+      g.strokeStyle = C.deep; g.lineWidth = 2; g.stroke();
+      g.font = F; g.textAlign = "left";
+      g.fillStyle = C.dim;
+      g.fillText("χ 复平面", A.x + 10, A.y + 18);
+      g.fillStyle = "rgba(255,122,122,.85)";
+      g.fillText("Im χ > 0", A.x + 10, A.y + 34);
+      g.fillStyle = "rgba(106,168,255,.9)";
+      g.fillText("Im χ < 0（「外侧」）", A.x + 10, A.y + A.h - 10);
+      g.fillStyle = "rgba(255,207,92,.9)";
+      g.fillText("实轴 + ∞ = 实圆", A.x + 10, ay - 9);
+      g.fillStyle = C.ink;
+      g.fillText("χ = 0.6" + (eta >= 0 ? "+" : "−") + Math.abs(eta).toFixed(2) + "i", px + 11, py - 9);
+      g.restore();
+
+      /* ---- 右：黎曼球 ---- */
+      var R = Math.min(B.w, B.h) * (nar ? 0.30 : 0.34);
+      var cx = B.x + B.w / 2, cy = B.y + B.h / 2;
+      var cst = Math.cos(TH);
+      var front = [], k, t;
+      for (k = 0; k <= 72; k++) {
+        t = Math.PI + k / 72 * Math.PI;
+        front.push([cx + Math.cos(t) * R, cy - Math.sin(t) * cst * R]);
+      }
+      /* 上侧半球（默认淡；点落在这一半时点亮） */
+      g.beginPath(); g.moveTo(front[0][0], front[0][1]);
+      for (k = 0; k < front.length; k++) g.lineTo(front[k][0], front[k][1]);
+      g.arc(cx, cy, R, 0, Math.PI, true); g.closePath();
+      g.fillStyle = eta > 0 ? "rgba(255,122,122,.28)" : "rgba(255,122,122,.09)"; g.fill();
+      /* 下侧（外侧）半球 */
+      g.beginPath(); g.moveTo(front[0][0], front[0][1]);
+      for (k = 0; k < front.length; k++) g.lineTo(front[k][0], front[k][1]);
+      g.arc(cx, cy, R, 0, Math.PI, false); g.closePath();
+      g.fillStyle = eta < 0 ? "rgba(106,168,255,.32)" : "rgba(106,168,255,.11)"; g.fill();
+      /* 经纬网 */
+      g.save(); g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.clip();
+      g.strokeStyle = "rgba(75,67,128,.85)"; g.lineWidth = 1;
+      var b, l, pt, sb, cb;
+      for (b = -1; b <= 1; b++) {
+        sb = Math.sin(b * Math.PI / 4); cb = Math.cos(b * Math.PI / 4);
+        g.beginPath();
+        for (k = 0; k <= 60; k++) {
+          l = k / 60 * Math.PI * 2;
+          pt = proj(cb * Math.cos(l), sb, cb * Math.sin(l), R, cx, cy);
+          k ? g.lineTo(pt[0], pt[1]) : g.moveTo(pt[0], pt[1]);
+        }
+        g.stroke();
+      }
+      for (k = 0; k < 4; k++) {
+        l = k / 4 * Math.PI * 2;
+        g.beginPath();
+        for (i = 0; i <= 40; i++) {
+          b = -Math.PI / 2 + i / 40 * Math.PI;
+          pt = proj(Math.cos(b) * Math.cos(l), Math.sin(b), Math.cos(b) * Math.sin(l), R, cx, cy);
+          i ? g.lineTo(pt[0], pt[1]) : g.moveTo(pt[0], pt[1]);
+        }
+        g.stroke();
+      }
+      g.restore();
+      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2);
+      g.strokeStyle = "rgba(242,236,223,.28)"; g.lineWidth = 1.5; g.stroke();
+      /* 实圆：背面虚线，正面粗实线 */
+      g.setLineDash([4, 3]); g.beginPath();
+      for (k = 0; k <= 72; k++) {
+        t = k / 72 * Math.PI;
+        pt = proj(Math.cos(t), 0, Math.sin(t), R, cx, cy);
+        k ? g.lineTo(pt[0], pt[1]) : g.moveTo(pt[0], pt[1]);
+      }
+      g.strokeStyle = "rgba(255,207,92,.32)"; g.lineWidth = 1.5; g.stroke();
+      g.setLineDash([]);
+      g.beginPath();
+      for (k = 0; k < front.length; k++) front[k][0] && g.lineTo(front[k][0], front[k][1]);
+      g.strokeStyle = C.gold; g.lineWidth = 2.6; g.stroke();
+      /* 点只在左边复平面里走：球是「劈成两半」的概念图，
+         正交投影下背面点会落到错的色块里，画上去反而误导。 */
+      g.font = F; g.fillStyle = C.dim;
+      g.fillText("实圆把球劈成两半", B.x + 10, B.y + 18);
+      g.fillStyle = "rgba(255,122,122,.85)"; g.fillText("上：Im χ > 0", B.x + 10, B.y + 34);
+      g.fillStyle = "rgba(106,168,255,.9)";
+      g.fillText("下：「外侧」= Im χ < 0", B.x + 10, B.y + B.h - 10);
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var s = VZ.slider(ctl, {
+      label: "η = Im χ", min: -1.3, max: 1.3, step: 0.02, value: 0,
+      format: function (v) { return v.toFixed(2); },
+      onInput: function (v) { eta = v; draw(); refresh(); }
+    });
+    VZ.btn(ctl, "走进下半平面", function () { eta = -1.0; s.set(-1.0); draw(); refresh(); });
+    VZ.btn(ctl, "回到实轴", function () { eta = 0; s.set(0); draw(); refresh(); });
+    var pan = VZ.panel(stage, { "η": "", "落在哪一半": "", "能不能延拓": "" });
+    function refresh() {
+      VZ.setPanel(pan, {
+        "η": "Im χ = " + eta.toFixed(2),
+        "落在哪一半": eta < 0 ? "「外侧」半球 = 下半平面" : (eta > 0 ? "内侧半球 = 上半平面" : "正好压在实圆上"),
+        "能不能延拓": eta < 0 ? "能：全纯延拓，且被这半边唯一确定" : (eta > 0 ? "不能：负频部分会指数爆炸" : "往哪边走，就归哪半")
+      });
+    }
+    draw(); refresh();
+  }
+},
+
+/* ------------------------------------------------------------
+   PL13 · 整条链：一处翻面，五格同时翻
+   ------------------------------------------------------------ */
+"f-pl-freqchain": {
+  title: "",
+  hint: "",
+  draw: function (stage) {
+    var C = VZ.C;
+    var nar = (stage.clientWidth || 720) < 560;
+    var W = nar ? 460 : 720, H = nar ? 400 : 196;
+    var cv = VZ.canvas(stage, W, H, { maxDpr: 2 });
+    var g = cv.ctx;
+    var eta = -0.8, F = "10.5px -apple-system,PingFang SC,sans-serif";
+
+    function draw() {
+      g.clearRect(0, 0, W, H);
+      var ok = eta < 0;
+      var cells = [
+        { t: ok ? "正频率" : "负频率", s: ok ? "g(p) 在 p>0 全零" : "g(p) 在 p>0 有值" },
+        { t: ok ? "只有 p < 0 的成分" : "混进了 p > 0", s: "e^(ipχ) 的 p 范围" },
+        { t: ok ? "下半平面" : "上半平面", s: "Im χ " + (ok ? "< 0" : "> 0") },
+        { t: ok ? "「外侧」半球" : "内侧半球", s: "实圆劈出的两半" },
+        { t: ok ? "能全纯延拓" : "延拓会爆炸", s: "唯一确定还是失控" }
+      ];
+      var n = cells.length, i, x, y, bw, bh, gap = nar ? 8 : 16;
+      var col = function (k) { return k === 4 ? (ok ? C.green : C.red) : (ok ? C.green : C.red); };
+      g.textAlign = "center";
+      if (!nar) {
+        bw = Math.min(126, (W - 20) / n - gap); bh = 66;
+        var total = n * bw + (n - 1) * gap, x0 = (W - total) / 2, cy = H * 0.44;
+        for (i = 0; i < n; i++) {
+          x = x0 + i * (bw + gap);
+          g.fillStyle = ok ? "rgba(94,224,138,.07)" : "rgba(255,122,122,.07)";
+          g.strokeStyle = ok ? "rgba(94,224,138,.75)" : "rgba(255,122,122,.75)";
+          g.lineWidth = 1.6;
+          g.beginPath(); g.rect(x, cy - bh / 2, bw, bh); g.fill(); g.stroke();
+          g.fillStyle = ok ? C.green : C.red; g.font = "bold " + F;
+          g.fillText(cells[i].t, x + bw / 2, cy - 4);
+          g.fillStyle = C.dim; g.font = "9.5px -apple-system,PingFang SC,sans-serif";
+          g.fillText(cells[i].s, x + bw / 2, cy + 14);
+          if (i < n - 1) {
+            var mx = x + bw + gap / 2;
+            g.beginPath();
+            g.moveTo(mx - 3, cy - 5); g.lineTo(mx + 3, cy); g.lineTo(mx - 3, cy + 5);
+            g.strokeStyle = ok ? "rgba(94,224,138,.7)" : "rgba(255,122,122,.7)";
+            g.lineWidth = 1.7; g.stroke();
+          }
+        }
+      } else {
+        bw = W - 36; bh = 54;
+        for (i = 0; i < n; i++) {
+          y = 16 + i * (bh + gap);
+          x = 18;
+          g.fillStyle = ok ? "rgba(94,224,138,.07)" : "rgba(255,122,122,.07)";
+          g.strokeStyle = ok ? "rgba(94,224,138,.75)" : "rgba(255,122,122,.75)";
+          g.lineWidth = 1.6;
+          g.beginPath(); g.rect(x, y, bw, bh); g.fill(); g.stroke();
+          g.fillStyle = ok ? C.green : C.red; g.font = "bold " + F;
+          g.fillText(cells[i].t, W / 2, y + 22);
+          g.fillStyle = C.dim; g.font = "9.5px -apple-system,PingFang SC,sans-serif";
+          g.fillText(cells[i].s, W / 2, y + 40);
+        }
+      }
+      g.textAlign = "left";
+      g.fillStyle = C.dim; g.font = "10px -apple-system,PingFang SC,sans-serif";
+      g.fillText("η = " + eta.toFixed(2) + "　拖过 0 的那一刻，整条链一次性翻面", nar ? 18 : 20, H - 12);
+    }
+
+    var ctl = VZ.box(stage, "viz-ctl");
+    var pan = VZ.panel(stage, { "η": "", "整条链" : "" });
+    VZ.slider(ctl, {
+      label: "η = Im χ", min: -1.8, max: 1.8, step: 0.05, value: eta,
+      format: function (v) { return v.toFixed(2); },
+      onInput: function (v) { eta = v; draw(); refresh(); }
+    });
+    function refresh() {
+      VZ.setPanel(pan, {
+        "η": "Im χ = " + eta.toFixed(2),
+        "整条链": eta < 0 ? "下半平面 → 外侧半球 → 只有 p<0 的成分 → 能全纯延拓"
+                          : "上半平面 → 内侧半球 → 混进 p>0 → 延拓会爆炸"
+      });
+    }
+    draw(); refresh();
+  }
 }
 
 });

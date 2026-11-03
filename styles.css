@@ -803,14 +803,6 @@ body.is-preview { padding-top: 34px; }
 .lab-hint{
   margin-top:9px;font-size:14px;line-height:1.85;color:var(--warm-dim);
 }
-/* 完整读本的入口（lab.link）：暖橙下划线链接，不做成按钮以免抢戏 */
-.lab-link{
-  display:inline-block;margin-top:11px;
-  font-size:13.5px;font-weight:700;letter-spacing:.02em;
-  color:var(--warm);text-decoration:none;
-  border-bottom:1px solid rgba(255,176,138,.55);padding-bottom:1px;
-}
-.lab-link:hover{color:#ffd7bd;border-bottom-color:#ffd7bd}
 .lab .figbox{margin:0}
 .lab .fig-title{color:var(--warm)}
 
