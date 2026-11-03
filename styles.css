@@ -758,6 +758,8 @@ body.is-preview { padding-top: 34px; }
   font-size:13px;color:var(--warm-dim);letter-spacing:.05em;margin-bottom:10px;
 }
 .plain-p{color:#f6e6dd;font-size:16.5px;line-height:2}
+/* 段与段之间留一口气：line-height 只有 2，零间距会把长段糊成一堵墙 */
+.plain-p + .plain-p{margin-top:10px}
 .plain-p b{color:#ffe2cf;font-weight:700}
 .plain-p code{
   background:rgba(0,0,0,.32);padding:1px 5px;border-radius:4px;
