@@ -735,10 +735,12 @@ var App = (function () {
     }
     if (it.kind === "lab") {
       var lab = it.v;
-      return '<div class="lab"><div class="lab-t">试一试</div>' +
+      return '<div class="lab"><div class="lab-t">' + (lab.tag || "试一试") + "</div>" +
         '<div class="lab-q">' + md(lab.q) + "</div>" +
         (lab.fig ? '<div class="figbox" id="plain-fig-' + idx + "-" + it.n + '"></div>' : "") +
         (lab.hint ? '<div class="lab-hint">' + md(lab.hint) + "</div>" : "") +
+        (lab.link ? '<a class="lab-link" href="' + esc(lab.link) + '" target="_blank" rel="noopener">' +
+          md(lab.linkText || "打开完整读本 →") + "</a>" : "") +
         "</div>";
     }
     if (it.kind === "ask") {
