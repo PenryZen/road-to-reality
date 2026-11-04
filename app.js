@@ -772,7 +772,9 @@ var App = (function () {
       '<span class="plain-sum-x"></span></summary>' +
       '<div class="plainblk" id="plain-body-' + cur.idx + '">';
 
-    if (pl.kicker) h += '<div class="plain-kicker">' + esc(pl.kicker) + "</div>";
+    /* 眉题里也可能带公式（如「13.4 · $\det AB=\det A\det B$」），走 md 才能渲染，
+       走 esc 会把 $…$ 原样吐在页面上 */
+    if (pl.kicker) h += '<div class="plain-kicker">' + md(pl.kicker) + "</div>";
 
     /* 按「节 → 行内环节」渲染，环节跟着它所在的那一节走 */
     var plan = plainPlan(pl), pi = 0;
