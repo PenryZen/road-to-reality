@@ -774,12 +774,12 @@ var App = (function () {
 
     /* 眉题里也可能带公式（如「13.4 · $\det AB=\det A\det B$」），走 md 才能渲染，
        走 esc 会把 $…$ 原样吐在页面上 */
-    if (pl.kicker) h += '<div class="plain-kicker">' + md(pl.kicker) + "</div>";
+    if (pl.kicker) h += '<div class="plain-kicker">' + mdc(pl.kicker) + "</div>";
 
     /* 按「节 → 行内环节」渲染，环节跟着它所在的那一节走 */
     var plan = plainPlan(pl), pi = 0;
     (pl.body || []).forEach(function (sec, si) {
-      var head = sec.h ? '<div class="plain-title">' + md(sec.h) + "</div>" : "";
+      var head = sec.h ? '<div class="plain-title">' + mdc(sec.h) + "</div>" : "";
       var inner = "", any = false;
       while (pi < plan.length && plan[pi].si === si) {
         inner += plainItemHtml(plan[pi], cur.idx);

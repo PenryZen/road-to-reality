@@ -2754,6 +2754,25 @@ DATA.chapters = (DATA.chapters || []).concat([
        "如果 $A$ 全纯，这方程好解：形如 $F = e^{B + \\bar B}$ 的表达式恰好合用，其中 $B = \\int A \\, dz$。可一般情形下 $A$ 不全纯，往往连一个非零解都没有。",
        "「这个丛有多少常截面」这件事，本身就是衡量联络非平凡程度的一把尺子。"
       ]
+     },
+     {
+      "h": "这一步是怎么来的",
+      "p": [
+       "起点是上一页给的联络：$\\nabla = \\partial/\\partial z - A$，共轭是 $\\bar\\nabla = \\partial/\\partial\\bar z - \\bar A$。原文那句「即 $\\partial F/\\partial z = AF$」，省掉的是把算子摊开这一步。",
+       "「水平」的意思是沿底空间搬运时 $F$ 不变，而搬运规则就写在 $\\nabla$ 里，所以水平就是 $\\nabla F = 0$。摊开即 $\\partial F/\\partial z - AF = 0$，移项得 $\\partial F/\\partial z = AF$。这里没有用到任何假设，只是把「导数减去一个乘数」写成了方程。",
+       {
+        "ask": {
+         "q": "既然 $F$ 是实值，为什么还要单独提 $\\bar\\nabla F = 0$？",
+         "a": "它不是新条件，是同一条件的镜像：把 $\\nabla F = 0$ 整体取共轭，$F$ 实值使 $\\bar F = F$，就得到 $\\bar\\nabla F = 0$。提它是为了后面凑 $F = e^{B+\\bar B}$ 时，两个方向的方程能一眼对上。"
+        }
+       },
+       "再验原文给的那个解。$B = \\int A\\,dz$ 的意思是 $\\partial B/\\partial z = A$；$A$ 全纯时 $B$ 只依赖 $z$，所以 $\\partial B/\\partial\\bar z = 0$。于是链式法则一步就够：",
+       "$\\partial F/\\partial z = (\\partial_z B + \\partial_z\\bar B)\\,e^{B+\\bar B} = A\\,F$",
+       "另一方向同理：$\\partial\\bar B/\\partial\\bar z = \\bar A$、$\\partial\\bar B/\\partial z = 0$，给出 $\\partial F/\\partial\\bar z = \\bar A F$。两个方向都对上了。",
+       "$F$ 落在实纤维里也自动成立：$B + \\bar B = 2\\,\\mathrm{Re}\\,B$ 是实数，所以 $F = e^{2\\mathrm{Re}\\,B}$ 是正实数，没有虚部要丢。",
+       "代一个数试。取 $A = c$（复常数），则 $B = cz$、$\\bar B = \\bar c\\bar z$，$F = e^{cz+\\bar c\\bar z}$。令 $c = 1+i$、$z = 1$：$cz = 1+i$、$\\bar c\\bar z = 1-i$，和为 $2$，$F = e^{2} \\approx 7.39$。按定义验：$\\partial F/\\partial z = cF = (1+i)F$，与 $AF$ 相同，故 $\\nabla F = (1+i)F - (1+i)F = 0$。",
+       "全纯这个前提不能丢。若 $\\partial A/\\partial\\bar z \\ne 0$，$B$ 就同时依赖 $z$ 与 $\\bar z$，$\\partial_z\\bar B = 0$ 这一条不再成立，上面的抵消做不成——这正是下一页对易子不为零、方程找不到非零解的意思。"
+      ]
      }
     ],
     "tail": "**一句话**：常截面 = $\\partial F/\\partial z = AF$ 的解；解有多少，联络就有多不平凡。"
@@ -2868,6 +2887,20 @@ DATA.chapters = (DATA.chapters || []).concat([
       "h": "曲率的用处",
       "p": [
        "「差角」是曲率的直接读数：和乐把看不见的联络变成了看得见的转动。这就是局部与整体之间的换算关系。"
+      ]
+     },
+     {
+      "h": "这一步是怎么来的",
+      "p": [
+       "起点还是那条联络 $\\nabla = \\partial/\\partial z - A$，以及上一页写出的曲率 $[\\nabla, \\bar\\nabla] = \\partial A/\\partial\\bar z - \\partial\\bar A/\\partial z$。取 $A = ik\\bar z$、$\\bar A = -ikz$，则 $\\partial A/\\partial\\bar z = ik$、$\\partial\\bar A/\\partial z = -ik$，对易子等于 $2ik$——**与 z 无关的常数**。原文说「常值非零选择」，指的就是这一点。",
+       "为什么绕一圈只会乘一个因子？沿曲线搬 $F$，就是要求切向量落在水平分布里：$\\dot z\\,\\partial_z F + \\dot{\\bar z}\\,\\partial_{\\bar z}F - (A\\dot z + \\bar A\\dot{\\bar z})F = 0$。把前两项移到右边，得到一个只含 $F$ 一次方的方程 $\\dot F = (A\\dot z + \\bar A\\dot{\\bar z})F$。一阶线性方程的解必然是 $F$ 乘一个指数，所以绕完一圈只剩一个乘数。",
+       "对半径 $r$ 的圆取 $z = re^{i\\theta}$，则 $\\dot z = iz$、$\\dot{\\bar z} = -i\\bar z$，且 $z\\bar z = r^{2}$。逐项算：$A\\dot z = ik\\bar z\\cdot iz = -kr^{2}$，$\\bar A\\dot{\\bar z} = (-ikz)(-i\\bar z) = -kr^{2}$，两项相同，合计 $-2kr^{2}$，与 $\\theta$ 无关。",
+       "所以 $\\dot F = -2kr^{2}F$，指数就是常数乘 $2\\pi$：",
+       "$F(2\\pi) = e^{-4\\pi k r^{2}}\\,F(0)$",
+       "圆面积是 $S = \\pi r^{2}$，指数正好写成 $-4kS$。$r$ 只通过面积进来，这就是「正比于面积」的确切含义。曲率为常数时，任意形状的回路同样只看到面积（斯托克斯定理），圆只是最好算的那一个。指数前的系数依赖定向与 $A$ 的符号约定，但那只改系数，不改「正比于面积」这一条。",
+       "回到原文那句「取适当的 k 值，单位圆上便得到因子 2 拉伸」。令 $r = 1$，条件就是 $e^{-4\\pi k} = 2$，解得 $k = -\\ln 2/(4\\pi) \\approx -0.0552$。",
+       "拿这个 $k$ 验一次：半径改成 $r = 2$，面积翻 4 倍，因子应当是 $2^{4} = 16$。直接代：$-4kS = -4\\cdot(-\\ln 2/4\\pi)\\cdot 4\\pi = 4\\ln 2$，而 $e^{4\\ln 2} = 16$。对上了：面积乘 4，拉伸因子就取四次方。",
+       "所以「正比于面积」不是形容词。把搬运方程沿圆积一圈，指数里只剩 $k$ 乘面积；$k$ 再由「单位圆上因子为 2」定死，整条关系就闭合了。"
       ]
      }
     ],

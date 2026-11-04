@@ -991,6 +991,36 @@ DATA.chapters = (DATA.chapters || []).concat([
         }
        }
       ]
+     },
+     {
+      "h": "三条性质是怎么算出来的",
+      "p": [
+       "原文把厄米、非负定、迹为 1 三条直接摆出来，没交代它们从哪来。其实三条都只是把定义 $D = \\sum_i p_i |\\psi_i\\rangle\\langle\\psi_i|$ 逐条验一遍，没有一条是额外加上去的。",
+       "先看厄米。$|\\psi\\rangle\\langle\\psi|$ 的厄米共轭是它自己：右矢与左矢互换位置，再取复共轭，回来还是同一个外积。权重 $p_i$ 都是实数，所以 $D^\\dagger = D$ 自动成立。",
+       {
+        "ask": {
+         "q": "$\\mathrm{Tr}\\,D = 1$ 是另外要求的一条吗？",
+         "a": "**不是。**它是「每个 $|\\psi_i\\rangle\\langle\\psi_i|$ 的迹都等于 1」加上「概率之和为 1」的直接结果。迹为 1 这条没有新内容，它只是把态矢量的归一化搬到了矩阵上。"
+        }
+       },
+       "迹那条算一遍就清楚。在一组正交归一基 $\\{|e_a\\rangle\\}$ 下，$\\mathrm{Tr}\\,|\\psi\\rangle\\langle\\psi| = \\sum_a \\langle e_a|\\psi\\rangle\\langle\\psi|e_a\\rangle = \\sum_a |\\langle e_a|\\psi\\rangle|^2$。最后这个和就是 $\\langle\\psi|\\psi\\rangle$，等于 1。每个纯态贡献 1，加起来自然是 $\\mathrm{Tr}\\,D = \\sum_i p_i = 1$。",
+       "非负定用的是同一个模方。对任何 $|x\\rangle$，$\\langle x|D|x\\rangle = \\sum_i p_i\\,|\\langle\\psi_i|x\\rangle|^2$，每一项都是「非负权重乘一个模方」，凑不出负数。",
+       {
+        "check": {
+         "q": "三条性质里，哪一条离不开「权重非负」这个前提？",
+         "opts": [
+          "厄米",
+          "非负定",
+          "迹为 1",
+          "三条都不需要"
+         ],
+         "right": 1,
+         "why": "非负定全靠 $p_i \\ge 0$：允许负权重的话，$\\langle x|D|x\\rangle$ 立刻可能为负。厄米只用到权重是实数，迹为 1 只用到权重求和为 1。三条各吃一条前提，分工并不重叠。"
+        }
+       },
+       "代一组数字。取 $p = 0.7$ 配 $|\\uparrow\\rangle$、$0.3$ 配 $|\\downarrow\\rangle$，则 $D = 0.7|\\uparrow\\rangle\\langle\\uparrow| + 0.3|\\downarrow\\rangle\\langle\\downarrow|$。迹是 $0.7 + 0.3 = 1$；取 $|x\\rangle = |\\rightarrow\\rangle$，$\\langle x|D|x\\rangle = 0.7\\times\\tfrac{1}{2} + 0.3\\times\\tfrac{1}{2} = 0.5$，确实非负；对角元都是实数、非对角元为零，也确实厄米。",
+       "三条都验完，这份「体检报告」就不是许愿了：厄米吃「权重是实数」，非负定吃「权重非负」，迹为 1 吃「概率和为 1」。"
+      ]
      }
     ],
     "tail": "**一句话**：密度矩阵把「可能在这儿、也可能在那儿」压成一个算符，三条性质是它的体检报告。"
@@ -1383,6 +1413,36 @@ DATA.chapters = (DATA.chapters || []).concat([
         }
        }
       ]
+     },
+     {
+      "h": "为什么非负定等于「在球里」",
+      "p": [
+       "原文从「必须非负定」一步跳到 $a^2 + b^2 + c^2 \\le 1$，中间省略了本征值。补上这一段，布洛赫球为什么真的是个**球**，就一目了然。",
+       "起点是那个一般形式。$2\\times2$ 厄米矩阵有四个实参数：两个对角元是实数，非对角元是一个复数的两个分量；迹为 1 把两个对角元压成一个 $a$，于是写成 $\\rho = \\tfrac{1}{2}\\begin{pmatrix} 1+a & b+ic \\\\ b-ic & 1-a \\end{pmatrix}$。",
+       {
+        "ask": {
+         "q": "为什么非负定会等价于一个「长度」小于 1？",
+         "a": "**因为两个本征值只依赖 $a, b, c$ 的一个组合。**对角化后，本征值是 $\\tfrac{1}{2}(1 \\pm r)$，其中 $r = \\sqrt{a^2+b^2+c^2}$。非负定要求两个都不小于零，大的那个永远为正，于是条件只剩小的一条：$r \\le 1$。"
+        }
+       },
+       "算本征值只需行列式和迹。先扔掉前面的 $\\tfrac{1}{2}$，令 $r^2 = a^2+b^2+c^2$：行列式是 $(1+a)(1-a) - (b+ic)(b-ic) = 1 - a^2 - b^2 - c^2 = 1 - r^2$，迹是 2。所以本征值 $\\lambda$ 满足 $\\lambda^2 - 2\\lambda + (1-r^2) = 0$，配方得 $(\\lambda-1)^2 = r^2$，即 $\\lambda = 1 \\pm r$。",
+       "乘回 $\\tfrac{1}{2}$：$\\rho$ 的两个本征值是 $\\tfrac{1}{2}(1+r)$ 与 $\\tfrac{1}{2}(1-r)$。前者恒正，所以非负定只剩 $1 - r \\ge 0$，也就是 $r \\le 1$。而 $r$ 正是点 $(a,b,c)$ 到原点的距离——条件就是「点在单位球内」。",
+       {
+        "check": {
+         "q": "$a=b=c=\\tfrac{1}{2}$ 落在布洛赫球的哪里？",
+         "opts": [
+          "球面上，是纯态",
+          "球内，是混态",
+          "球外，不是密度矩阵",
+          "正好在球心"
+         ],
+         "right": 1,
+         "why": "$r = \\sqrt{3}/2 \\approx 0.866$，小于 1，所以在球内。本征值是 $\\tfrac{1}{2}(1 \\pm 0.866)$，约 $0.933$ 与 $0.067$——两个都正、都不为零，正是混态。球面要求 $r$ 恰好等于 1。"
+        }
+       },
+       "再代两组数字验边界。取 $a=1, b=c=0$：$r=1$，本征值 $1$ 与 $0$，矩阵是 $\\begin{pmatrix} 1 & 0 \\\\ 0 & 0 \\end{pmatrix}$，也就是 $|\\uparrow\\rangle\\langle\\uparrow|$，确实是纯态。再往外取 $c=2$：$r=2$，本征值 $\\tfrac{3}{2}$ 与 $-\\tfrac{1}{2}$。取 $|x\\rangle = (|\\uparrow\\rangle + i|\\downarrow\\rangle)/\\sqrt{2}$ 直接算，$\\langle x|\\rho|x\\rangle = -\\tfrac{1}{2}$——一个负「概率」，球外的点因此必须排除。",
+       "所以布洛赫球不是画着好看的比喻：球面 $r=1$ 是两个本征值 $(1,0)$ 的纯态，球内 $r<1$ 是两个正本征值的混态，球外是负本征值、根本不算密度矩阵。"
+      ]
      }
     ],
     "tail": "**一句话**：纯态在球面，混态在球内；每根弦都是一种说法，说法不止一种。"
@@ -1429,6 +1489,39 @@ DATA.chapters = (DATA.chapters || []).concat([
          "why": "这½ 是**经典无知**：他不知道同事测到了什么，也不知道自己那颗到底处于哪个态。这正是密度矩阵最典型的用法——把「不知道」编码进算符。注意它跟第 23 页那个「纯量子概率」的 ½ 长得一样，账面上分不开。"
         }
        }
+      ]
+     },
+     {
+      "h": "这一步是怎么来的",
+      "p": [
+       "原文从「各占 ½」直接落到 $D = \\tfrac12|\\uparrow\\rangle\\langle\\uparrow| + \\tfrac12|\\downarrow\\rangle\\langle\\downarrow|$。两个 ½ 不是随手写的，它们来自单态里两个分支的振幅；而为什么只能写成混合、不能写成一个叠加，还要另算一笔。",
+       {
+        "ask": {
+         "q": "同事测得上、下两个结果的机会，为什么正好相等？",
+         "a": "因为这一对粒子处在总自旋 0 的单态 $|\\Omega\\rangle = (|\\uparrow\\rangle|\\downarrow\\rangle - |\\downarrow\\rangle|\\uparrow\\rangle)/\\sqrt{2}$。两个分支的振幅都是 $1/\\sqrt{2}$，地位完全对等，没有哪一项更大。$1/\\sqrt{2}$ 的模方是 $1/2$，所以两种配对各占一半——这就是两个 ½ 的来历。"
+        }
+       },
+       "把两颗粒子分开写，这件事看得更清楚：",
+       "$|\\Omega\\rangle = \\tfrac{1}{\\sqrt{2}}\\left(|\\uparrow\\rangle_E|\\downarrow\\rangle_T - |\\downarrow\\rangle_E|\\uparrow\\rangle_T\\right)$",
+       "下标 $E$ 指地球这颗粒子，$T$ 指泰坦那颗粒子。两个分支相互正交，模方各为 $1/2$；地球这颗粒子拿到 $|\\uparrow\\rangle$ 还是 $|\\downarrow\\rangle$，取决于同事在泰坦上读到的是哪一个。",
+       "第二件事：为什么不能把它写成一个确定的叠加态。假设这颗粒子真的处在 $(|\\uparrow\\rangle+|\\downarrow\\rangle)/\\sqrt{2}$，那么沿左右方向测量，它必定给出 $|\\rightarrow\\rangle$，概率是 1。",
+       "按混合 $D$ 去算同一个量，结果只有一半：",
+       "$\\langle\\rightarrow|D|\\rightarrow\\rangle = \\tfrac12|\\langle\\uparrow|\\rightarrow\\rangle|^2 + \\tfrac12|\\langle\\downarrow|\\rightarrow\\rangle|^2 = \\tfrac12\\cdot\\tfrac12 + \\tfrac12\\cdot\\tfrac12 = \\tfrac12$",
+       "一个 1、一个 ½，差得很远。实验站在混合这一边，所以「各占 ½」只能写成概率加权，不能写成一支右矢。",
+       {
+        "check": {
+         "q": "若粒子处在上下等权的纯叠加，左右方向会测得什么？",
+         "opts": [
+          "必定 $|\\rightarrow\\rangle$",
+          "各得一半",
+          "必定 $|\\leftarrow\\rangle$",
+          "无法预测"
+         ],
+         "right": 0,
+         "why": "$(|\\uparrow\\rangle+|\\downarrow\\rangle)/\\sqrt{2}$ 就是 $|\\rightarrow\\rangle$ 本身，沿左右方向测必得 $|\\rightarrow\\rangle$，概率为 1。而实际情形是各半，所以这个纯叠加不是这颗粒子的态——纯态带干涉，混合不带。"
+        }
+       },
+       "两笔账各归各位：½ 既是单态两支振幅的模方，也正好是「不知同事读到哪个」的权重，两套算法给出同一个数；而混合与叠加的分别落在干涉项上——$D$ 里没有 $|\\uparrow\\rangle\\langle\\downarrow|$ 这类项，换到左右基去数，读数仍是各半。"
       ]
      }
     ],
@@ -1584,6 +1677,35 @@ DATA.chapters = (DATA.chapters || []).concat([
          "why": "作者的原话：由于所有本征值相等，无论用哪个正交归一基它形式都一样，所以**没有任何东西能把上下基与左右基等等区分开**。注意「等等」——斜向基也一样。这正是下一段要动手术的地方。"
         }
        }
+      ]
+     },
+     {
+      "h": "换基之后为什么一个字都不变",
+      "p": [
+       "原文说它在任何正交归一基下都写成 $\\tfrac{1}{2}\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}$。这句话一头连着完备性，一头连着「单位矩阵与基无关」，两截都值得展开。",
+       "第一截：先认出它是单位矩阵的倍数。$\\{|\\uparrow\\rangle, |\\downarrow\\rangle\\}$ 是一组正交归一基，完备性给出 $|\\uparrow\\rangle\\langle\\uparrow| + |\\downarrow\\rangle\\langle\\downarrow| = I$。代回 $D = \\tfrac{1}{2}|\\uparrow\\rangle\\langle\\uparrow| + \\tfrac{1}{2}|\\downarrow\\rangle\\langle\\downarrow|$，立刻得到 $D = \\tfrac{1}{2}I$。",
+       {
+        "ask": {
+         "q": "为什么 $\\tfrac{1}{2}I$ 换一组基不会变？",
+         "a": "**因为换基是一次相似变换 $D \\mapsto UDU^\\dagger$，而单位矩阵与任何 $U$ 对易。**$U(\\tfrac{1}{2}I)U^\\dagger = \\tfrac{1}{2}UU^\\dagger = \\tfrac{1}{2}I$。每一组正交归一基都对应某个 $U$，所以每条式子都通到同一个矩阵。"
+        }
+       },
+       "第二截：不用相似变换，直接按定义算矩阵元。新基下 $D'_{ij} = \\langle e_i|D|e_j\\rangle = \\tfrac{1}{2}\\langle e_i|e_j\\rangle$。对角元是 $\\tfrac{1}{2}$，非对角元是 $0$——两组结果对上。",
+       {
+        "check": {
+         "q": "「本征值全相等」为什么让基失去区分力？",
+         "opts": [
+          "因为本征值决定矩阵的大小",
+          "因为对角化后都是 $\\tfrac{1}{2}$，用哪组基都一样",
+          "因为本征值必须是实数",
+          "因为矩阵是厄米的"
+         ],
+         "right": 1,
+         "why": "对角化之后只剩两个 $\\tfrac{1}{2}$，没有哪个基能把它们分得更细。本征值全同意味着本征空间是整个二维空间，每条方向都是「本征方向」，于是上下基、左右基、斜向基给的是同一个矩阵。"
+        }
+       },
+       "代具体数字也一致。上下基里 $\\langle\\uparrow|D|\\uparrow\\rangle = \\tfrac{1}{2}$、$\\langle\\uparrow|D|\\downarrow\\rangle = 0$；换到 $|\\rightarrow\\rangle = (|\\uparrow\\rangle+|\\downarrow\\rangle)/\\sqrt{2}$，$\\langle\\rightarrow|D|\\rightarrow\\rangle = \\tfrac{1}{2}\\times 1 = \\tfrac{1}{2}$，$\\langle\\rightarrow|D|\\leftarrow\\rangle = \\tfrac{1}{2}\\times 0 = 0$。四个数逐个对上。",
+       "所以它的指纹是 $(\\tfrac{1}{2}, \\tfrac{1}{2})$，而这组指纹对任何方向都成立——没有任何东西能把上下基与左右基区分开。"
       ]
      }
     ],
@@ -2249,6 +2371,36 @@ DATA.chapters = (DATA.chapters || []).concat([
          "hint": "拖「基角 θ」：θ = 0° 是感知基，每个分支里猫态都**确定**；θ = 45° 是 $A\\pm B$ 基，每个分支里猫态都成了**叠加**。同一个 $|C\\rangle$，只是换了一组描述用的基，「猫到底死没死」的答案就变了——量子力学没有任何规则指定该用哪组基。"
         }
        }
+      ]
+     },
+     {
+      "h": "那条重写是怎么算出来的",
+      "p": [
+       "原文说 $|\\Omega\\rangle = |\\uparrow\\rangle|\\downarrow\\rangle - |\\downarrow\\rangle|\\uparrow\\rangle$ 可以重写成 $|\\rightarrow\\rangle|\\leftarrow\\rangle - |\\leftarrow\\rangle|\\rightarrow\\rangle$。这不是类比，是**直接代入**，值得算一遍。",
+       "起点是左右基的定义：$|\\rightarrow\\rangle = (|\\uparrow\\rangle+|\\downarrow\\rangle)/\\sqrt{2}$，$|\\leftarrow\\rangle = (|\\uparrow\\rangle-|\\downarrow\\rangle)/\\sqrt{2}$。它们与上下基张成同一个二维空间，只是换了一组正交归一基。",
+       {
+        "ask": {
+         "q": "基换了，态为什么还能说是同一个？",
+         "a": "**因为换基只换坐标，不换矢量。**同一个矢量在同一空间里只有一个，换一组基只是换它的写法和分量。作者说「可以按许多方式重写」，底气就在这里：每套写法描述的是同一个 $|\\Omega\\rangle$。"
+        }
+       },
+       "先算两个乘积。$|\\rightarrow\\rangle|\\leftarrow\\rangle = \\tfrac{1}{2}(|\\uparrow\\rangle+|\\downarrow\\rangle)(|\\uparrow\\rangle-|\\downarrow\\rangle) = \\tfrac{1}{2}(|\\uparrow\\uparrow\\rangle - |\\uparrow\\downarrow\\rangle + |\\downarrow\\uparrow\\rangle - |\\downarrow\\downarrow\\rangle)$。",
+       "同理 $|\\leftarrow\\rangle|\\rightarrow\\rangle = \\tfrac{1}{2}(|\\uparrow\\uparrow\\rangle + |\\uparrow\\downarrow\\rangle - |\\downarrow\\uparrow\\rangle - |\\downarrow\\downarrow\\rangle)$。两式相减，$|\\uparrow\\uparrow\\rangle$ 与 $|\\downarrow\\downarrow\\rangle$ 成对消掉，剩下 $\\tfrac{1}{2}(-2|\\uparrow\\downarrow\\rangle + 2|\\downarrow\\uparrow\\rangle) = -(|\\uparrow\\downarrow\\rangle - |\\downarrow\\uparrow\\rangle) = -|\\Omega\\rangle$。",
+       {
+        "check": {
+         "q": "相减得到的是 $-|\\Omega\\rangle$，这算不算写错？",
+         "opts": [
+          "算错，差了一个负号",
+          "不算，整体相位不改变物理态",
+          "不算，因为 $|\\Omega\\rangle$ 其实是零",
+          "算错，两式应当相加"
+         ],
+         "right": 1,
+         "why": "整体乘一个模为 1 的复数不改变物理态，$-1 = e^{i\\pi}$ 正是这种相位。所以两套写法描述同一个自旋 0 态，作者写「等于」时把这个符号略去了，并不是算错。"
+        }
+       },
+       "再验两件事。系数：新写法里 $|\\uparrow\\downarrow\\rangle$ 的系数是 $-1$、$|\\downarrow\\uparrow\\rangle$ 是 $+1$，模方和为 2，与 $|\\Omega\\rangle$ 一致，归一化没被破坏。对称性：交换两颗粒子，$|\\uparrow\\downarrow\\rangle - |\\downarrow\\uparrow\\rangle$ 变号，新写法同样变号，两边都是反对称。",
+       "所以猫的例子是同一回事：$|活猫\\rangle+|死猫\\rangle$ 配上 $|感知活猫\\rangle+|感知死猫\\rangle$，换到另一组基就变成另一套配对。变的是写法，不是态。"
       ]
      }
     ],
