@@ -44,6 +44,9 @@ var App = (function () {
     if (v === "wall") renderWall();
     if (v === "library") renderLibrary();
     if (v === "companion") renderCompanion();
+    /* 批注工具条只在阅读页出现 */
+    document.body.classList.toggle("on-level", v === "level");
+    if (typeof INK !== "undefined" && v !== "level") INK.setOn(false);
     window.scrollTo(0, 0);
   }
 
@@ -423,6 +426,7 @@ var App = (function () {
   function goPage(i) {
     var n = (cur.stage && cur.stage.items) ? cur.stage.items.length : 0;
     if (!n) return;
+    if (typeof INK !== "undefined") INK.flush();   /* 笔迹先落盘，别丢最后一笔 */
     i = Math.max(0, Math.min(n - 1, i));
     if (i === cur.idx) return;
     cur.idx = i;
@@ -566,6 +570,10 @@ var App = (function () {
     else if (stg.kind === "create") renderCreate(it, act);
     fitWideMath($("lv-stage"));
     npcContextBanner();
+    /* 手写批注层：按「关卡:页码」挂上去，独立于正文 DOM */
+    if (typeof INK !== "undefined") {
+      INK.attach($("lv-stage"), cur.level.id + ":" + cur.idx);
+    }
   }
 
   function confRow(cb) {
@@ -2343,6 +2351,7 @@ var App = (function () {
 
   /* ---------- 启动 ---------- */
   function init() {
+    if (typeof INK !== "undefined") INK.init();   /* 手写批注：先挂工具条与 IndexedDB */
     S = Engine.load();
     Engine.touchDay();
     /* 预览模式：URL 带 ?preview=1 时全解锁，页面顶部挂一条提示条 */

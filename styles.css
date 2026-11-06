@@ -897,3 +897,44 @@ body.readmode #lv-stage .plain-check-why{font-size:18px;line-height:2}
   text-align:center;margin:14px 0;padding:2px 0;
 }
 .plain-fml .katex{font-size:1.06em}
+
+/* ============================================================
+   手写批注层（ink.js）
+   —— 画在正文之上的透明画布，关闭时完全不拦事件
+   ============================================================ */
+.stage{position:relative}
+.ink-layer{position:absolute;left:0;top:0;z-index:6;touch-action:none;
+  -webkit-user-select:none;user-select:none;cursor:crosshair}
+body.ink-on .stage{-webkit-user-select:none;user-select:none}
+body.ink-on .ink-layer{cursor:crosshair}
+
+.ink-bar{position:fixed;right:22px;bottom:26px;z-index:60;display:flex;flex-direction:column;
+  align-items:flex-end;gap:8px;pointer-events:none}
+.ink-fab{pointer-events:auto;width:42px;height:42px;border-radius:50%;cursor:pointer;
+  border:1px solid var(--line);background:var(--surf2);color:var(--txt);font-size:17px;line-height:1;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);transition:background .16s,border-color .16s,transform .16s}
+.ink-fab:hover{background:var(--surf3);border-color:rgba(62,232,240,.5)}
+.ink-fab.active{background:rgba(62,232,240,.16);border-color:var(--cyan);color:var(--cyan)}
+
+.ink-tools{pointer-events:auto;display:none;align-items:center;gap:6px;padding:7px 9px;
+  background:var(--surf2);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.ink-bar.on .ink-tools{display:flex}
+.ink-tools button{width:30px;height:30px;border-radius:8px;cursor:pointer;
+  border:1px solid transparent;background:var(--surf3);color:#cfc9ee;font-size:13px;line-height:1;
+  transition:background .14s,color .14s,border-color .14s}
+.ink-tools button:hover{background:#2b2452;color:#fff}
+.ink-tools button.sel{border-color:var(--cyan);color:var(--cyan);background:rgba(62,232,240,.14)}
+.ink-tools button:disabled{color:#8d86b5;cursor:default;background:var(--surf1)}
+.ink-tools .ink-c{background:var(--c);border-color:rgba(0,0,0,.25)}
+.ink-tools .ink-c.sel{box-shadow:0 0 0 2px var(--surf2),0 0 0 3px var(--cyan)}
+.ink-sep{width:1px;height:18px;background:var(--line);margin:0 2px}
+
+@media (max-width:720px){
+  .ink-bar{right:12px;bottom:14px}
+  .ink-fab{width:38px;height:38px}
+  .ink-tools{gap:4px;padding:6px}
+  .ink-tools button{width:27px;height:27px;font-size:12px}
+}
+.ink-bar{display:none}
+body.on-level .ink-bar{display:flex}
