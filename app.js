@@ -669,8 +669,8 @@ var App = (function () {
     return esc(String(s)).replace(/\n/g, "<br>");
   }
   /* 文本渲染：公式走 MT（KaTeX）；MT 不可用时退回纯转义 */
-  function md(s) {
-    if (typeof MT !== "undefined") return MT.md(String(s));
+  function md(s, opts) {
+    if (typeof MT !== "undefined") return MT.md(String(s), opts);
     return esc(String(s))
       .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
       .replace(/`([^`]+)`/g, "<code>$1</code>");
@@ -739,7 +739,9 @@ var App = (function () {
                   && bare.indexOf("$", 1) === bare.length - 1
                   && typeof MT !== "undefined" && MT.isBlockMath(bare.slice(1, -1));
       if (isFml) return '<div class="plain-p plain-fml">' + md(bare) + "</div>";
-      return '<div class="plain-p">' + md(it.v) + "</div>";
+      /* promo:60 —— 人话是连着读的，公式只有长到必须占一行才升行；
+         否则句子被抽走中间一截，前后只剩「把」「以及」这类碎行 */
+      return '<div class="plain-p">' + md(it.v, { promo: 60 }) + "</div>";
     }
     if (it.kind === "lab") {
       var lab = it.v;

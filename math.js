@@ -461,6 +461,13 @@
      ★ 必须按「原文」长度判，不能按 fracify 之后的 tex 判：
        a/b 被转成 \frac{a}{b} 后长度凭空翻倍，∂/∂x 这种 4 个字符的东西
        也会被抬成独立一行，正文被切成一段一段（就是「断层」的主因）。 */
+  /* promo 选项：只有原式长到这个字数才允许升成独立一行。
+     人话层用它 —— 句子中间的公式一旦被抽走，前后就只剩「把」「以及」这种碎行。 */
+  function promoOk(raw, opts) {
+    if (!opts || !opts.promo) return true;
+    return String(raw || "").replace(/\s+/g, "").length >= opts.promo;
+  }
+
   function isLongMath(raw, tex) {
     var t = String(raw || "").replace(/\s+/g, "");
     var len = t.length;
@@ -501,7 +508,7 @@
      看上去就是「断层」。分子分母都简单（不含 + − = 之类）时退回斜杠写法，
      行高立刻齐平，读起来也是书上常见的 inline 排法。 */
   function inlineFrac(tex) {
-    return String(tex).replace(/\\frac\{([^{}]{1,12})\}\{([^{}]{1,12})\}/g, function (all, a, b) {
+    return String(tex).replace(/\\frac\{([^{}]{1,16})\}\{([^{}]{1,16})\}/g, function (all, a, b) {
       if (/[=+\-<>]/.test(a) || /[=+\-<>]/.test(b)) return all;
       return a.replace(/\s+$/, "") + "/" + b.replace(/\s+$/, "");
     });
@@ -578,7 +585,7 @@
       if (isMathSeg(core)) {
         var tex = fracify(toTex(core));
         var h = null, tail = "";
-        if (isLongMath(core, tex) && !(opts && opts.compact) && fitsLine(txt, m.index)) {
+        if (isLongMath(core, tex) && !(opts && opts.compact) && fitsLine(txt, m.index) && promoOk(core, opts)) {
           /* 长公式：单独成行。顺手把紧跟的句读收进来，
              免得公式后面孤零零掉一个句号占一行。 */
           /* 句读整串收进来：「0.207879576…。」里的 … 和 。 都要跟着公式走，
@@ -630,7 +637,7 @@
          例外：compact（闪卡）模式不升 —— 卡片里一句话被公式切成三段，
          读起来像小标题串联，不如让公式留在句子里。 */
       if (!disp && isLongMath(m[3] !== undefined ? m[3] : (m[4] !== undefined ? m[4] : m[0]), tex) &&
-          !(opts && opts.compact)) {
+          !(opts && opts.compact) && promoOk(m[3] !== undefined ? m[3] : (m[4] !== undefined ? m[4] : m[0]), opts)) {
         var tail = "";
         while (i < s.length && /[。，、；：？！…·」』）】》%]/.test(s.charAt(i))) { tail += s.charAt(i); i++; }
         h = displayHTML(tex, "mblk mb-disp", tail);
