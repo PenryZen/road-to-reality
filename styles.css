@@ -938,3 +938,63 @@ body.ink-on .ink-layer{cursor:crosshair}
 }
 .ink-bar{display:none}
 body.on-level .ink-bar{display:flex}
+
+/* ============================================================
+   全书目录（自由阅读）与小节条
+   —— 书架不是考场：只做导航，不带进度压力
+   ============================================================ */
+.cat-bar{display:flex;align-items:center;gap:12px;margin:0 0 18px}
+.cat-q{flex:1;min-width:0;padding:10px 14px;border-radius:10px;font:inherit;font-size:14px;
+  background:var(--surf2);border:1px solid var(--line);color:var(--txt)}
+.cat-q:focus{outline:none;border-color:rgba(62,232,240,.55);background:var(--surf3)}
+.cat-q::placeholder{color:#8d86b5}
+.cat-count{font-size:12px;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.cat-region{margin:0 0 22px}
+.cat-region>h2{font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--dim);margin:0 0 8px;padding:0 2px}
+
+.cat-ch{border-top:1px solid var(--line)}
+.cat-region .cat-ch:last-child{border-bottom:1px solid var(--line)}
+.cat-hd{display:flex;align-items:baseline;gap:12px;width:100%;padding:11px 6px;background:none;
+  border:0;cursor:pointer;text-align:left;color:var(--txt);font:inherit;border-radius:6px}
+.cat-hd:hover{background:var(--surf2)}
+.cat-no{flex:0 0 auto;font-size:12px;color:#8d86b5;font-variant-numeric:tabular-nums;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.cat-tt{flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-meta{flex:0 0 auto;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.cat-caret{flex:0 0 auto;font-size:11px;color:#8d86b5;transition:transform .18s}
+.cat-ch.open .cat-caret{transform:rotate(180deg);color:var(--cyan)}
+.cat-ch.open .cat-tt{color:var(--cyan)}
+
+.cat-secs{overflow:hidden}
+.cat-secs:empty{display:none}
+.cat-secs-in{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;padding:2px 0 14px 30px}
+.cat-sec{display:flex;align-items:baseline;gap:8px;padding:6px 8px;background:none;border:0;
+  cursor:pointer;text-align:left;color:var(--txt);font:inherit;font-size:13.5px;border-radius:6px;min-width:0}
+.cat-sec:hover{background:var(--surf3);color:var(--cyan)}
+.cat-sec-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-sec-p{flex:0 0 auto;font-size:11px;color:#8d86b5;font-variant-numeric:tabular-nums}
+.cat-sec-all{grid-column:1 / -1;color:var(--cyan);font-weight:600}
+.cat-loading{padding:6px 8px 14px 30px;font-size:13px;color:#8d86b5}
+.cat-note{font-size:12.5px;color:var(--dim);line-height:1.7;margin:0 0 10px}
+
+@media (max-width:720px){
+  .cat-secs-in{grid-template-columns:1fr;padding-left:0}
+  .cat-meta{display:none}
+  .cat-q{font-size:15px}
+}
+
+/* 章内小节条：横滚 chips，当前节电青 */
+.rd-sections{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;margin:0 0 2px;
+  scrollbar-width:none;-ms-overflow-style:none}
+.rd-sections::-webkit-scrollbar{display:none}
+.rd-sections.hidden{display:none}
+.rd-sec{flex:0 0 auto;padding:5px 10px;border-radius:99px;font:inherit;font-size:12.5px;
+  background:var(--surf1);border:1px solid var(--line);color:#b9b3d6;cursor:pointer;white-space:nowrap;
+  transition:color .14s,border-color .14s,background .14s}
+.rd-sec:hover{color:var(--cyan);border-color:rgba(62,232,240,.45)}
+.rd-sec.on{background:rgba(62,232,240,.14);border-color:var(--cyan);color:var(--cyan);font-weight:600}
+.cat-bak{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+#cat-store .cat-bak:last-child{border-bottom:1px solid var(--line)}

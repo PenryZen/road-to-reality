@@ -32,7 +32,7 @@ var App = (function () {
   function showView(v) {
     cur.view = v;
     if (v !== "level") { if (typeof TTS !== "undefined") TTS.stop(); hideSelMenu(); }
-    ["map", "recall", "wall", "library", "companion", "level"].forEach(function (k) {
+    ["map", "catalog", "recall", "wall", "library", "companion", "level"].forEach(function (k) {
       var el = $("view-" + k);
       if (el) el.classList.toggle("hidden", k !== v);
     });
@@ -40,6 +40,7 @@ var App = (function () {
       t.classList.toggle("active", t.dataset.view === v);
     });
     if (v === "map") renderMap();
+    if (v === "catalog") renderCatalog();
     if (v === "recall") { renderRecall(); ensureMathForRecall(); }
     if (v === "wall") renderWall();
     if (v === "library") renderLibrary();
@@ -68,6 +69,336 @@ var App = (function () {
     /* 正文还没载入时，用按需加载清单里的步数，地图上的「读到 x/y」照样能显示 */
     var n = String(lv.chapter || "").replace(/^ch/, "");
     return (typeof LZ !== "undefined" && LZ.stepsOf(n)) || 0;
+  }
+
+  /* ---------- 全书目录：绕过关卡顺序的阅读入口 ----------
+     关卡制的代价是「没通关就看不见后面」。这里给一个纯书架：
+     能到任意一章任意一节，进入后写 cur.free = 1，不写页码、不结算、不加 XP。 */
+  var catExpanded = {};      /* 哪些章展开着，切视图回来还在 */
+  var freeReq = null;        /* {lv, page} 待进入的自由阅读请求 */
+
+  var catAllLoaded = false;
+  function loadAllChapters() {
+    if (catAllLoaded) return Promise.resolve();
+    var ms = (typeof LZ !== "undefined" && LZ.manifest && LZ.manifest.chapters) || {};
+    var seen = {}, files = [];
+    Object.keys(ms).forEach(function (k) { if (!seen[ms[k]]) { seen[ms[k]] = 1; files.push(ms[k]); } });
+    return Promise.all(files.map(function (f) { return LZ.load(f).catch(function () { }); }))
+      .then(function () { catAllLoaded = true; });
+  }
+  function chSteps(chId) {
+    var ch = (DATA.chapters || []).filter(function (x) { return x.id === chId; })[0];
+    return ch ? (ch.steps || []) : null;
+  }
+  function loadChapterData(chId) {
+    if (chSteps(chId)) return Promise.resolve();
+    var n = String(chId).replace(/^ch/, "");
+    var f = (typeof LZ !== "undefined" && LZ.manifest && LZ.manifest.chapters)
+      ? LZ.manifest.chapters[n] : null;
+    if (!f) return Promise.resolve();
+    return LZ.load(f).catch(function () { });
+  }
+  /* 小节 = 首个 section 页 + 所有「小节起点」页，名字取该页的 h */
+  function sectionsOf(chId) {
+    var st = chSteps(chId);
+    if (!st) return [];
+    var out = [], last = null;
+    st.forEach(function (it, i) {
+      if (i === 0) { out.push({ i: 0, label: "开头" }); last = "开头"; return; }
+      if (!isSectionStart(it)) return;
+      var lb = pageLabel(it);
+      if (lb === last) return;              /* 同一节的后续页不重复列 */
+      last = lb;
+      out.push({ i: i, label: lb });
+    });
+    return out;
+  }
+  function chTitle(lv) {
+    var ch = (DATA.chapters || []).filter(function (x) { return x.id === lv.chapter; })[0];
+    if (ch && ch.title) return ch.title;
+    return String(lv.name || "").replace(/^精读 · 第 \d+ 章\s*/, "");
+  }
+  function chNo(lv) { return String(lv.chapter || "").replace(/^ch/, ""); }
+
+  function renderCatalog() {
+    var q = ($("cat-q") && $("cat-q").value || "").trim().toLowerCase();
+    var reads = DATA.levels.filter(function (l) { return l.type === "read"; });
+    var html = "", shown = 0;
+    /* 搜索：章名命中也算，小节名命中也算（后者要先把三块章节数据取回来） */
+    var secHit = {};
+    if (q && catAllLoaded) {
+      reads.forEach(function (lv) {
+        var nm = (chTitle(lv) + " " + (lv.name || "")).toLowerCase();
+        if (nm.indexOf(q) >= 0) return;
+        var st = chSteps(lv.chapter) || [], hits = [];
+        st.forEach(function (it, i) {
+          if (i === 0 || !isSectionStart(it)) return;
+          var lb = pageLabel(it);
+          if (lb && lb.toLowerCase().indexOf(q) >= 0) hits.push(i);
+        });
+        if (hits.length) secHit[lv.chapter] = hits;
+      });
+    }
+    DATA.regions.forEach(function (rg) {
+      var lvs = reads.filter(function (l) { return l.r === rg.id; });
+      if (!lvs.length) return;
+      var block = "";
+      lvs.forEach(function (lv) {
+        var t = chTitle(lv), hit = !q || (t.toLowerCase().indexOf(q) >= 0) ||
+          (lv.name || "").toLowerCase().indexOf(q) >= 0 || ("第" + chNo(lv) + "章").indexOf(q) >= 0 ||
+          !!secHit[lv.chapter];
+        if (!hit) return;
+        if (secHit[lv.chapter]) catExpanded[lv.chapter] = true;
+        shown++;
+        var rec = S.levels[lv.id] || {};
+        var pages = levelPages(lv);
+        var meta = pages ? pages + " 页" : "";
+        if (rec.done) meta += " · 已通关";
+        else if (rec.page > 0) meta += " · 读到 " + (rec.page + 1);
+        var open = !!catExpanded[lv.chapter];
+        block += '<div class="cat-ch' + (open ? " open" : "") + '" data-ch="' + lv.chapter + '">' +
+          '<button class="cat-hd" data-ch="' + lv.chapter + '">' +
+            '<span class="cat-no">' + ("0" + chNo(lv)).slice(-2) + "</span>" +
+            '<span class="cat-tt">' + esc(t) + "</span>" +
+            '<span class="cat-meta">' + meta + "</span>" +
+            '<span class="cat-caret">▾</span>' +
+          "</button>" +
+          '<div class="cat-secs" data-box="' + lv.chapter + '">' +
+            (open ? '<div class="cat-secs-in">' + secsHtml(lv.chapter, secHit[lv.chapter]) + "</div>" : "") +
+          "</div></div>";
+      });
+      if (block) html += '<div class="cat-region"><h2>' + rg.name + "</h2>" + block + "</div>";
+    });
+    $("cat-list").innerHTML = html || '<p class="cat-note">没有匹配的章节。换个词试试，比如「时空」「量子」「扭量」。</p>';
+    $("cat-count").textContent = shown + " / " + reads.length + " 章";
+    bindCatalog();
+    bindStore();
+    /* 展开着的章，数据可能还没到：补一次渲染 */
+    Object.keys(catExpanded).forEach(function (ch) {
+      if (!catExpanded[ch]) return;
+      loadChapterData(ch).then(function () {
+        var box = document.querySelector('[data-box="' + ch + '"]');
+        if (!box || !catExpanded[ch]) return;
+        if (!box.querySelector(".cat-secs-in")) {
+          box.innerHTML = '<div class="cat-secs-in">' + secsHtml(ch) + "</div>";
+          bindSecs(ch);
+        }
+      });
+    });
+  }
+
+  function secsHtml(ch, only) {
+    var secs = sectionsOf(ch);
+    if (!secs.length) return '<div class="cat-loading">正在取这一章的小节…</div>';
+    var all = secs.length, hit = null;
+    if (only && only.length) {
+      hit = secs.filter(function (s) { return only.indexOf(s.i) >= 0; });
+      if (hit.length) secs = hit; else hit = null;
+    }
+    return secs.map(function (s) {
+      return '<button class="cat-sec" data-ch="' + ch + '" data-i="' + s.i + '" title="第 ' + (s.i + 1) + ' 页">' +
+        '<span class="cat-sec-t">' + esc(s.label) + '</span><span class="cat-sec-p">' + (s.i + 1) + "</span></button>";
+    }).join("") +
+      (hit && hit.length < all
+        ? '<button class="cat-sec cat-sec-all" data-ch="' + ch + '" data-i="' + hit[0].i + '">命中 ' + hit.length +
+          " 节 · 点这里从第一处读起</button>"
+        : '<button class="cat-sec cat-sec-all" data-ch="' + ch + '" data-i="0">从头读全章 ›</button>');
+  }
+
+  function bindCatalog() {
+    document.querySelectorAll(".cat-hd").forEach(function (b) {
+      b.onclick = function () {
+        var ch = b.dataset.ch;
+        catExpanded[ch] = !catExpanded[ch];
+        var wrap = b.parentNode, box = wrap.querySelector(".cat-secs");
+        wrap.classList.toggle("open", catExpanded[ch]);
+        if (catExpanded[ch]) {
+          if (!box.querySelector(".cat-secs-in")) {
+            box.innerHTML = '<div class="cat-secs-in">' + secsHtml(ch) + "</div>";
+            loadChapterData(ch).then(function () {
+              var bx = document.querySelector('[data-box="' + ch + '"]');
+              if (bx && catExpanded[ch]) { bx.innerHTML = '<div class="cat-secs-in">' + secsHtml(ch) + "</div>"; bindSecs(ch); }
+            });
+          }
+          bindSecs(ch);
+        } else box.innerHTML = "";
+      };
+    });
+    document.querySelectorAll(".cat-sec[data-ch]").forEach(function (b) {
+      b.onclick = function () { openFree(b.dataset.ch, +b.dataset.i || 0); };
+    });
+  }
+  function bindSecs(ch) {
+    document.querySelectorAll('.cat-sec[data-ch="' + ch + '"]').forEach(function (b) {
+      b.onclick = function () { openFree(b.dataset.ch, +b.dataset.i || 0); };
+    });
+  }
+
+  /* 自由阅读：进关但不写档 */
+  function openFree(chId, page) {
+    var lv = DATA.levels.filter(function (l) { return l.type === "read" && l.chapter === chId; })[0];
+    if (!lv) { toast("这一章还没有精读稿"); return; }
+    freeReq = { lv: lv.id, page: Math.max(0, page | 0) };
+    openLevel(lv.id);
+  }
+
+  /* 章内小节条：让「任意一节」在阅读中随时可达 */
+  function paintSections() {
+    var box = $("rd-sections");
+    if (!box) return;
+    var items = (cur.stage && cur.stage.kind === "read") ? cur.stage.items : null;
+    if (!items || items.length < 3) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+    var secs = [], lastLb = null;
+    items.forEach(function (it, i) {
+      if (i === 0) { secs.push({ i: 0, label: "开头" }); lastLb = "开头"; return; }
+      if (!isSectionStart(it)) return;
+      var lb = pageLabel(it);
+      if (lb === lastLb) return;
+      lastLb = lb;
+      secs.push({ i: i, label: lb });
+    });
+    if (secs.length < 2) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+    var curSec = 0;
+    secs.forEach(function (s) { if (s.i <= cur.idx) curSec = s.i; });
+    box.classList.remove("hidden");
+    box.innerHTML = secs.map(function (s) {
+      return '<button class="rd-sec' + (s.i === curSec ? " on" : "") + '" data-i="' + s.i + '">' +
+        esc(s.label) + "</button>";
+    }).join("");
+    box.querySelectorAll(".rd-sec").forEach(function (b) {
+      b.onclick = function () {
+        var i = +b.dataset.i;
+        if (i !== cur.idx) goPage(i);
+        else b.blur();
+      };
+    });
+    var on = box.querySelector(".rd-sec.on");
+    if (on && on.scrollIntoView) {
+      var br = box.getBoundingClientRect(), or = on.getBoundingClientRect();
+      if (or.left < br.left || or.right > br.right - 4) {
+        box.scrollLeft += (or.left - br.left) - (br.width - or.width) / 2;
+      }
+    }
+  }
+
+  /* ---------- 存档保险 ----------
+     存档只在这台浏览器的 localStorage 里。清缓存 / 换浏览器 / 隐私模式都会没，
+     而且清空后一打开就被空档覆盖——上次就是这么丢的。所以：
+     1) 只有当前存档有真实进度时才写备份，空档绝不覆盖好备份；
+     2) 轮换三份，跨天也有得退；
+     3) 手动导出成文件，可以放别处。 */
+  var BAK_KEYS = ["learn_os_state_bak0", "learn_os_state_bak1", "learn_os_state_bak2"];
+
+  function bakRead() {
+    var out = [];
+    BAK_KEYS.forEach(function (k) {
+      try {
+        var o = JSON.parse(localStorage.getItem(k) || "null");
+        if (o && o.s) out.push({ key: k, at: o.at || 0, s: o.s });
+      } catch (e) { }
+    });
+    out.sort(function (a, b) { return b.at - a.at; });
+    return out;
+  }
+  function progressScore(s) {
+    if (!s) return 0;
+    return (s.xp || 0) + Object.keys(s.levels || {}).length * 50 + Object.keys(s.cards || {}).length * 2;
+  }
+  function autoBackup() {
+    var s = Engine.state();
+    if (progressScore(s) <= 0) return;          /* 空档不写，保住旧备份 */
+    var list = bakRead();
+    for (var i = 0; i < list.length; i++) {
+      if (JSON.stringify(list[i].s) === JSON.stringify(s)) return;   /* 一样就不重复占槽 */
+    }
+    var used = list.map(function (b) { return b.key; });
+    var slot = BAK_KEYS.filter(function (k) { return used.indexOf(k) < 0; })[0];
+    if (!slot) slot = list[list.length - 1].key;   /* 满了就盖最旧 */
+    try { localStorage.setItem(slot, JSON.stringify({ at: Date.now(), s: s })); } catch (e) { }
+  }
+  function catMsg(h) { var el = $("cat-store-msg"); if (el) el.innerHTML = h; }
+
+  function downloadState() {
+    var d = new Date();
+    var name = "rtr-state-" + d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) +
+      ("0" + d.getDate()).slice(-2) + ".json";
+    var blob = new Blob([Engine.exportJson()], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1200);
+    catMsg("已导出 " + name + "。放到 iCloud / 网盘里，换机器时导入即可。");
+  }
+  function importState() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = ".json,application/json";
+    inp.onchange = function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var o;
+        try { o = JSON.parse(String(fr.result)); } catch (e) { return catMsg("这不是合法的 JSON 文件。"); }
+        if (!o || typeof o !== "object" || !("levels" in o) || !("cards" in o)) {
+          return catMsg("这个 JSON 不像 rtr 存档（缺 levels / cards 字段）。");
+        }
+        if (!confirm("用这份存档覆盖当前进度？当前进度会先存进自动备份。")) return;
+        try { localStorage.setItem(BAK_KEYS[0], JSON.stringify({ at: Date.now(), s: Engine.state() })); } catch (e) { }
+        try {
+          localStorage.setItem("learn_os_state_v1", JSON.stringify(o));
+          location.reload();
+        } catch (e) { catMsg("写入失败：" + e.message); }
+      };
+      fr.readAsText(f);
+    };
+    inp.click();
+  }
+  function showBackups() {
+    var list = bakRead();
+    if (!list.length) {
+      return catMsg("还没有自动备份。备份只在存档里有真实进度时写入——空档不会占位。");
+    }
+    catMsg(list.map(function (b) {
+      var d = new Date(b.at);
+      var p = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2) +
+        " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+      return '<div class="cat-bak"><span>' + p + " · XP " + (b.s.xp || 0) +
+        " · 关卡 " + Object.keys(b.s.levels || {}).length +
+        " · 卡片 " + Object.keys(b.s.cards || {}).length + "</span>" +
+        '<button class="btn small ghost" data-bak="' + b.key + '">恢复这一份</button></div>';
+    }).join(""));
+    document.querySelectorAll("[data-bak]").forEach(function (b) {
+      b.onclick = function () {
+        if (!confirm("用这份备份覆盖当前进度？")) return;
+        try {
+          var o = JSON.parse(localStorage.getItem(b.dataset.bak));
+          localStorage.setItem("learn_os_state_v1", JSON.stringify(o.s));
+          location.reload();
+        } catch (e) { catMsg("恢复失败：" + e.message); }
+      };
+    });
+  }
+  function bindStore() {
+    var e = $("cat-export"), i = $("cat-import"), b = $("cat-bak");
+    if (e) e.onclick = downloadState;
+    if (i) i.onclick = importState;
+    if (b) b.onclick = showBackups;
+    var st = Engine.state();
+    if (progressScore(st) <= 0 && bakRead().length) {
+      catMsg('<b style="color:var(--gold)">当前存档是空的</b>，但本机有自动备份。点「看自动备份」可以恢复。');
+    }
+    var q = $("cat-q");
+    if (q) q.oninput = function () {
+      clearTimeout(q._t);
+      q._t = setTimeout(function () {
+        var v = q.value.trim();
+        if (v.length >= 2 && !catAllLoaded) loadAllChapters().then(renderCatalog);
+        else renderCatalog();
+      }, 220);
+    };
   }
 
   /* ---------- 地图 ---------- */
@@ -351,7 +682,7 @@ var App = (function () {
   function enterLevel(lv, token) {
     /* 每次进关都重算「本章首次出现」，否则回头重读时点线全没了 */
     if (typeof EMPH !== "undefined") EMPH.reset(String(lv.chapter || "").replace(/^ch/, ""));
-    cur.level = lv; cur.idx = 0; cur.score = 0; cur.hintUsed = false; cur.predicted = null; cur.noScore = false;
+    cur.level = lv; cur.idx = 0; cur.score = 0; cur.hintUsed = false; cur.predicted = null; cur.noScore = false; cur.free = 0;
     cur.total = lv.n;
     cur.pageTotal = null;
     cur.resumed = 0;
@@ -359,12 +690,19 @@ var App = (function () {
     // 精读关与教材关按“页”推进：进度条走页数，得分仍按检查题数算（lv.n）
     if (cur.stage.kind === "lesson" || cur.stage.kind === "read") {
       cur.pageTotal = cur.stage.items.length || 1;
-      /* 续读：直接回到上次读到的那一页。
-         已通关的关从头开始（要把检查题重新走一遍，不是复习阅读）。 */
-      var rec = S.levels[lv.id];
-      var saved = (rec && rec.done) ? 0 : Engine.getPage(lv.id);
-      saved = Math.max(0, Math.min(saved, Math.max(0, cur.stage.items.length - 1)));
-      if (saved > 0) { cur.idx = saved; cur.resumed = saved; }
+      /* 自由阅读：直接跳到请求的那一页，不碰续读记录 */
+      if (freeReq && freeReq.lv === lv.id) {
+        cur.free = 1;
+        cur.idx = Math.max(0, Math.min(freeReq.page, Math.max(0, cur.stage.items.length - 1)));
+        freeReq = null;
+      } else {
+        /* 续读：直接回到上次读到的那一页。
+           已通关的关从头开始（要把检查题重新走一遍，不是复习阅读）。 */
+        var rec = S.levels[lv.id];
+        var saved = (rec && rec.done) ? 0 : Engine.getPage(lv.id);
+        saved = Math.max(0, Math.min(saved, Math.max(0, cur.stage.items.length - 1)));
+        if (saved > 0) { cur.idx = saved; cur.resumed = saved; }
+      }
     }
     showView("level");
     $("lv-tag").textContent = lv.method;
@@ -549,6 +887,9 @@ var App = (function () {
 
   function renderStage() {
     progress();
+    var bk = $("level-back");
+    if (bk) bk.textContent = cur.free ? "← 返回目录" : "← 返回地图";
+    if (cur.free && $("lv-method")) $("lv-method").innerHTML = "自由阅读 · 不记 XP、不写进度";
     var stg = cur.stage, act = $("lv-actions"), fb = $("lv-feedback");
     if (typeof TTS !== "undefined") TTS.stop();   /* 翻页即停，避免读串页 */
     hideSelMenu();
@@ -556,7 +897,7 @@ var App = (function () {
     act.innerHTML = "";
     if (cur.idx >= stg.items.length) { finishLevel(); return; }
     /* 逐页记忆：翻到哪一页就存哪一页，中途退出/关掉浏览器都从这页续读 */
-    if (stg.kind === "read" || stg.kind === "lesson") Engine.setPage(cur.level.id, cur.idx);
+    if (!cur.free && (stg.kind === "read" || stg.kind === "lesson")) Engine.setPage(cur.level.id, cur.idx);
     var it = stg.items[cur.idx];
     curCtx = it;
     if (stg.kind === "lesson") renderLesson(stg, it, act);
@@ -569,6 +910,7 @@ var App = (function () {
     else if (stg.kind === "mistake") renderMistake(it, act);
     else if (stg.kind === "create") renderCreate(it, act);
     fitWideMath($("lv-stage"));
+    paintSections();
     npcContextBanner();
     /* 手写批注层：按「关卡:页码」挂上去，独立于正文 DOM */
     if (typeof INK !== "undefined") {
@@ -1510,6 +1852,16 @@ var App = (function () {
 
   function finishLevel() {
     var lv = cur.level;
+    if (cur.free) {
+      $("lv-stage").innerHTML = '<h2>这一章读完了</h2><div class="material">' +
+        "自由阅读不结算、不写进度，所以这里没有分数。想把它变成「记住」，回地图按关卡走一遍出门检查。</div>";
+      $("lv-actions").innerHTML = '<button class="btn primary" id="free-back">回全书目录</button>' +
+        '<button class="btn ghost" id="free-map">回地图</button>';
+      $("free-back").onclick = function () { showView("catalog"); };
+      $("free-map").onclick = function () { showView("map"); };
+      $("lv-progress").style.width = "100%";
+      return;
+    }
     var rec = Engine.setLevelResult(lv.id, cur.score, cur.total);
     /* 整章走完、结算过：页码归零，下次进来从头读 */
     Engine.setPage(lv.id, 0);
@@ -2355,6 +2707,7 @@ var App = (function () {
   function init() {
     if (typeof INK !== "undefined") INK.init();   /* 手写批注：先挂工具条与 IndexedDB */
     S = Engine.load();
+    autoBackup();              /* 有进度才写，空档不覆盖好备份 */
     Engine.touchDay();
     /* 预览模式：URL 带 ?preview=1 时全解锁，页面顶部挂一条提示条 */
     if (/[?&]preview=1/.test(location.search)) {
@@ -2375,7 +2728,10 @@ var App = (function () {
     document.querySelectorAll(".tab").forEach(function (t) {
       t.onclick = function () { showView(t.dataset.view); };
     });
-    $("level-back").onclick = function () { showView("map"); };
+    $("level-back").onclick = function () {
+      showView(cur.free ? "catalog" : "map");
+      if (cur.free) { cur.free = 0; $("level-back").textContent = "← 返回地图"; }
+    };
     $("exp-csv").onclick = function () { download("learn_os_anki.csv", Engine.exportCsv(), "text/csv;charset=utf-8"); };
     $("exp-json").onclick = function () { download("learn_os_log.json", Engine.exportJson(), "application/json"); };
     $("exp-reset").onclick = function () {

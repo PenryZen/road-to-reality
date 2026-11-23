@@ -25,6 +25,7 @@
     </div>
     <nav class="hud-nav">
       <button class="tab active" data-view="map">地图</button>
+      <button class="tab" data-view="catalog">全书目录</button>
       <button class="tab" data-view="recall">今日复习</button>
       <button class="tab" data-view="wall">复盘墙</button>
       <button class="tab" data-view="library">方法图鉴</button>
@@ -52,6 +53,29 @@
           <li><b>XP 只奖励提取</b>：读精读稿不给分，答对出门检查才给分。</li>
           <li><b>先编码后提取</b>：精读关排在闪卡关之前；精读不通关，该章的卡片不会标记为已学，闪卡关不解锁。</li>
         </ul>
+      </div>
+    </section>
+
+    <!-- ---------- 全书目录：不受关卡顺序限制 ---------- -->
+    <section class="view hidden" id="view-catalog">
+      <div class="view-head">
+        <h1>全书目录 · 想读哪节读哪节</h1>
+        <p>这里不受关卡顺序限制。<b>自由阅读不记 XP、不进卡组、不改通关记录</b>——它是书架，不是考场。要练提取，回地图按关卡走。</p>
+      </div>
+      <div class="cat-bar">
+        <input id="cat-q" class="cat-q" type="search" placeholder="搜章节名或小节名，比如「测地线」「薛定谔」" autocomplete="off">
+        <span class="cat-count" id="cat-count"></span>
+      </div>
+      <div id="cat-list" class="cat-list"></div>
+      <div class="panel" id="cat-store">
+        <h2 class="panel-t">存档保险</h2>
+        <p class="cat-note">存档存在这台浏览器里（localStorage）。换浏览器、清缓存、隐私模式都会丢。这里可以手动留底。</p>
+        <div class="row-btns">
+          <button class="btn small" id="cat-export">导出存档</button>
+          <button class="btn small ghost" id="cat-import">导入存档</button>
+          <button class="btn small ghost" id="cat-bak">看自动备份</button>
+        </div>
+        <div class="cat-note" id="cat-store-msg"></div>
       </div>
     </section>
 
@@ -254,6 +278,7 @@
         <div class="lv-method" id="lv-method"></div>
       </div>
       <!-- 阅读滑轨：既是进度，也是页码导航（悬停看页码+小节，点击/方向键跳页） -->
+      <div class="rd-sections" id="rd-sections"></div>
       <div class="rd-scrub" id="rd-scrub" role="slider" tabindex="0"
            aria-label="阅读进度，可跳页" aria-orientation="horizontal"
            aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">
