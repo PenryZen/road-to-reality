@@ -998,3 +998,46 @@ body.on-level .ink-bar{display:flex}
   padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;color:var(--dim);
   font-variant-numeric:tabular-nums}
 #cat-store .cat-bak:last-child{border-bottom:1px solid var(--line)}
+
+/* ============================================================
+   科普层（vulgar）—— 比「人话」再低一档：先给画面，再谈严谨
+   —— 整块淡金 callout + 1px 同色描边，不做左侧色条、不嵌套卡片
+   ============================================================ */
+.vulgwrap{
+  margin:20px 0 8px;border:1px solid rgba(255,209,102,.30);border-radius:14px;
+  background:rgba(255,209,102,.045);overflow:hidden;
+}
+.vulg-sum{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;
+  list-style:none;user-select:none;transition:background .15s}
+.vulg-sum::-webkit-details-marker{display:none}
+.vulg-sum:hover{background:rgba(255,209,102,.09)}
+.vulg-sum:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.vulg-badge{flex:none;font-size:12.5px;font-weight:700;letter-spacing:.08em;
+  color:#2a1c00;background:var(--gold);padding:2px 9px;border-radius:999px}
+.vulg-sum-t{flex:1;min-width:0;font-size:15.5px;color:var(--gold);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vulg-sum-x{flex:none;width:8px;height:8px;border-right:2px solid var(--gold);
+  border-bottom:2px solid var(--gold);transform:rotate(45deg);margin-right:4px;transition:transform .18s}
+.vulgwrap[open] .vulg-sum-x{transform:rotate(-135deg)}
+
+.vulgblk{padding:2px 18px 16px}
+.vulg-p{margin:0 0 10px;font-size:15.5px;line-height:1.9;color:var(--txt)}
+.vulg-lead{color:#f0e6c8;margin-bottom:14px}
+.vulg-card{padding:12px 0 2px;border-top:1px solid rgba(255,209,102,.16)}
+.vulg-card:first-of-type{border-top:0;padding-top:0}
+.vulg-card-t{font-size:13.5px;font-weight:700;letter-spacing:.02em;color:var(--gold);margin:0 0 7px}
+
+.vulg-links{margin-top:6px;padding-top:12px;border-top:1px solid rgba(255,209,102,.16)}
+.vulg-links-t{font-size:12.5px;color:var(--dim);margin:0 0 8px;letter-spacing:.02em}
+.vulg-link{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:8px 10px;
+  margin:0 0 6px;border-radius:9px;background:rgba(255,209,102,.06);
+  border:1px solid rgba(255,209,102,.18);text-decoration:none;transition:background .14s,border-color .14s}
+.vulg-link:hover{background:rgba(255,209,102,.14);border-color:rgba(255,209,102,.45)}
+.vulg-link-t{font-size:14px;font-weight:600;color:var(--gold)}
+.vulg-link-w{font-size:12.5px;color:var(--dim);line-height:1.6}
+.vulg-link::after{content:"↗";margin-left:auto;font-size:12px;color:var(--dim)}
+@media (max-width:720px){
+  .vulgblk{padding:2px 14px 14px}
+  .vulg-p{font-size:16px;line-height:1.85}
+  .vulg-sum-t{font-size:15px}
+}

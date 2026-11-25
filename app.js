@@ -1114,6 +1114,38 @@ var App = (function () {
     return "";
   }
 
+  /* ---------- 科普层 ----------
+     比「人话」还低一档：不讲推导、不追求严谨，只求先给一个能想的画面。
+     数据在 gen/orig/vulgar/chNN.json，由 build-lazy.py 挂到 step.vulgar 上。 */
+  function vulgarHtml(it) {
+    var v = it && it.vulgar;
+    if (!v) return "";
+    var h = '<details class="vulgwrap"' + (v.open ? " open" : "") + ">" +
+      '<summary class="vulg-sum"><span class="vulg-badge">科普</span>' +
+      '<span class="vulg-sum-t">' + md(v.t || "换个说法", { promo: 60 }) + "</span>" +
+      '<span class="vulg-sum-x"></span></summary>' +
+      '<div class="vulgblk">';
+    /* promo:60 —— 科普是连着读的，短公式不许拆成独立一行 */
+    var MO = { promo: 60 };
+    if (v.intro) h += '<p class="vulg-p vulg-lead">' + md(v.intro, MO) + "</p>";
+    (v.cards || []).forEach(function (c) {
+      h += '<div class="vulg-card">';
+      if (c.h) h += '<div class="vulg-card-t">' + md(c.h, MO) + "</div>";
+      (c.p || []).forEach(function (t) { h += '<p class="vulg-p">' + md(t, MO) + "</p>"; });
+      h += "</div>";
+    });
+    if (v.links && v.links.length) {
+      h += '<div class="vulg-links"><div class="vulg-links-t">还是闷？这几个讲得更慢</div>';
+      v.links.forEach(function (l) {
+        h += '<a class="vulg-link" href="' + esc(l.u) + '" target="_blank" rel="noopener noreferrer">' +
+          '<span class="vulg-link-t">' + esc(l.t) + "</span>" +
+          (l.w ? '<span class="vulg-link-w">' + esc(l.w) + "</span>" : "") + "</a>";
+      });
+      h += "</div>";
+    }
+    return h + "</div></details>";
+  }
+
   function plainHtml(it) {
     var pl = it.plain;
     if (!pl) return "";
@@ -1491,7 +1523,8 @@ var App = (function () {
       /* 挂载式小图：讲解步骤正文下方直接嵌一张交互图 */
       if (it.fig) body += '<div class="figbox fig-inline" id="rd-fig-inline"></div>';
     }
-    var stageHtml = head + body;
+    /* fig 页的科普要放在图前面：文案里写的是「下面这张图可以拖」 */
+    var stageHtml = head + (it.t === "fig" ? vulgarHtml(it) + body : body + vulgarHtml(it));
     if ((it.t === "pair" || it.text) && it.t !== "q" && it.t !== "fig") stageHtml += ttsBarHtml(it);
     $("lv-stage").innerHTML = stageHtml;
     /* 两层强调：术语（「…」）与卡点句（下方拆解引用的那句） */
